@@ -6,4 +6,8 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\Souqify.Domain\Souqify.Domain.csproj" />
+  </ItemGroup>
+
 </Project>
