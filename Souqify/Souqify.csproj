@@ -14,4 +14,9 @@
     <Folder Include="Controllers\" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\Souqify.Application\Souqify.Application.csproj" />
+    <ProjectReference Include="..\Souqify.Infrastructure\Souqify.Infrastructure.csproj" />
+  </ItemGroup>
+
 </Project>
