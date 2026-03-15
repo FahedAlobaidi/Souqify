@@ -70,9 +70,80 @@ namespace Souqify.Infrastructure.Repositories
 
        
 
-        public async Task<IEnumerable<Product>> GetAllProductsAsync(ProductQueryParams productQueryParams)
+        public async Task<PagedList<Product>> GetAllProductsAsync(ProductQueryParams productQueryParams)
         {
-            return await _souqifyDbContext.Products.AsNoTracking().ToListAsync();
+            var collection = _souqifyDbContext.Products.AsNoTracking().AsQueryable();
+
+            collection = collection.Where(p => p.IsActive);
+            collection = ApplyFilter(productQueryParams, collection);
+
+            var items = await collection.Skip((productQueryParams.CurrentPage - 1) * productQueryParams.PageSize).Take(productQueryParams.PageSize).ToListAsync();
+            var totalItems = await collection.CountAsync();
+
+            var pagedList = PagedList<Product>.CreatePagination(items, productQueryParams.PageSize, totalItems, productQueryParams.CurrentPage);
+
+            return pagedList;
+        }
+
+        private IQueryable<Product> ApplyFilter(ProductQueryParams productQueryParams, IQueryable<Product> collection)
+        {
+            if (!string.IsNullOrWhiteSpace(productQueryParams.Brand))
+            {
+                productQueryParams.Brand = productQueryParams.Brand.Trim();
+                collection = collection.Where(p => p.Brand == productQueryParams.Brand);
+            }
+
+            if (!string.IsNullOrWhiteSpace(productQueryParams.Category))
+            {
+                productQueryParams.Category = productQueryParams.Category.Trim();
+                /*
+                See what happened? EF Core saw you accessing p.Category.Name and automatically added the JOIN.
+                You never loaded the Category object into memory — it just used it for filtering in SQL.
+                */
+                collection = collection.Where(p => p.Category.Name == productQueryParams.Category);
+            }
+
+            if (!string.IsNullOrWhiteSpace(productQueryParams.Sort))
+            {
+                productQueryParams.Sort = productQueryParams.Sort.Trim();
+                collection = ApplySort(productQueryParams.Sort, collection);
+            }
+
+            if (productQueryParams.MinPrice.HasValue)
+            {
+                collection = collection.Where(p => p.BasePrice >= productQueryParams.MinPrice);
+            }
+
+            if (productQueryParams.MaxPrice.HasValue)
+            {
+                collection = collection.Where(p => p.BasePrice <= productQueryParams.MaxPrice);
+            }
+
+            return collection;
+        }
+
+        private IQueryable<Product> ApplySort(string sort,IQueryable<Product> collection)
+        {
+            switch (sort)
+            {
+                case "priceAsc":
+                    collection = collection.OrderBy(p => p.BasePrice);
+                    break;
+                case "priceDesc":
+                    collection = collection.OrderByDescending(p => p.BasePrice);
+                    break;
+                case "nameAsc":
+                    collection = collection.OrderBy(p => p.Name);
+                    break;
+                case "nameDesc":
+                    collection = collection.OrderByDescending(p => p.Name);
+                    break;
+                default:
+                    collection = collection.OrderBy(p => p.CreatedAt);
+                    break;
+            }
+
+            return collection;
         }
 
         public async Task<IEnumerable<string>> GetBrandsAsync()

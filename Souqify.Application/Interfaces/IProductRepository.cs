@@ -10,7 +10,7 @@ namespace Souqify.Application.Interfaces
 {
     public interface IProductRepository
     {
-        Task<IEnumerable<Product>> GetAllProductsAsync(ProductQueryParams productQueryParams);
+        Task<PagedList<Product>> GetAllProductsAsync(ProductQueryParams productQueryParams);
         Task<Product?> GetProductByIdAsync(Guid productId);
         Task<IEnumerable<Product>> GetFeaturedProductAsync();
         Task DeactivateProductAsync(Guid productId);
