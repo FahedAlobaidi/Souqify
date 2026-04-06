@@ -1,7 +1,11 @@
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.EntityFrameworkCore;
+using Souqify.Application.Interfaces;
+using Souqify.Application.Mappings;
 using Souqify.Extensions;
 using Souqify.Infrastructure;
+using Souqify.Infrastructure.Queries;
+using Souqify.Infrastructure.Repositories;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -12,9 +16,15 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-var connectionSetring = builder.Configuration.GetConnectionString("DefaultConnection");
+builder.Services.AddAutoMapper(typeof(ProductMappingProfile).Assembly);
 
+var connectionSetring = builder.Configuration.GetConnectionString("DefaultConnection");
 builder.Services.AddDatabase(connectionSetring);
+
+builder.Services.AddScoped<IAdminProductQueries, AdminProductQueries>();
+builder.Services.AddScoped<IProductRepository, ProductRepository>();
+builder.Services.AddScoped<IProductQueries, ProductQueries>();
+builder.Services.AddScoped<ICategoryQueries, CategoryQueries>();
 
 var app = builder.Build();
 
