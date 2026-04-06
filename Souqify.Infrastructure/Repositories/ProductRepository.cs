@@ -1,13 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using Souqify.Application.DTOs.Product;
 using Souqify.Application.Interfaces;
-using Souqify.Application.Models;
 using Souqify.Domain;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+
 
 namespace Souqify.Infrastructure.Repositories
 {
@@ -29,8 +23,6 @@ namespace Souqify.Infrastructure.Repositories
 
         public async Task<ProductImage> AddProductImageAsync(Guid productId, ProductImage productImage)
         {
-            var productEnt =await GetProductOrThrowAsync(productId);
-
             productImage.ProductId = productId;//connect product image to product
 
             await _souqifyDbContext.ProductImages.AddAsync(productImage);
@@ -40,8 +32,6 @@ namespace Souqify.Infrastructure.Repositories
 
         public async Task<ProductVariant> AddProductVariantAsync(Guid productId, ProductVariant productVariant)
         {
-            var productEnt = await GetProductOrThrowAsync(productId);
-
             productVariant.ProductId = productId;
 
             await _souqifyDbContext.ProductVariants.AddAsync(productVariant);
@@ -49,43 +39,41 @@ namespace Souqify.Infrastructure.Repositories
             return productVariant;
         }
 
-        public async Task DeactivateProductAsync(Guid productId)
+        public void DeactivateProduct(Product product)
         {
-            var productEnt = await GetProductOrThrowAsync(productId);
-
-            productEnt.IsActive = false;
+            product.IsActive = false;
         }
 
-        public async Task DeleteProductImageAsync(Guid productId, Guid productImageId)
+        public void DeleteProductImage(ProductImage productImage)
         {
-            var productImgEnt = await GetProductImageByIdAsync(productId, productImageId);
-
-            if (productImgEnt == null)
-            {
-                throw new Exception("No product image with this id");
-            }
-
-            _souqifyDbContext.ProductImages.Remove(productImgEnt);
+             _souqifyDbContext.ProductImages.Remove(productImage);
 
         }
 
         public async Task<Product?> GetProductByIdAsync(Guid productId)
         {
-            return await _souqifyDbContext.Products.Where(p=>p.Id==productId).Include(p=>p.Variants).Include(p=>p.ProductImages).Include(p=>p.Category).AsSplitQuery().FirstOrDefaultAsync();
+            return await _souqifyDbContext.Products.Where(p=>p.Id==productId && p.IsActive).Include(p=>p.Variants.Where(v=>v.IsActive)).Include(p=>p.ProductImages).Include(p=>p.Category).AsSplitQuery().FirstOrDefaultAsync();
         }
 
         public async Task<ProductImage?> GetProductImageByIdAsync(Guid productId, Guid productImageId)
         {
-            await GetProductOrThrowAsync(productId);
-
-            return await _souqifyDbContext.ProductImages.FindAsync(productImageId);
+            return await _souqifyDbContext.ProductImages.FirstOrDefaultAsync(pi=>pi.Id==productImageId && pi.ProductId==productId);
         }
 
         public async Task<ProductVariant?> GetProductVariantByIdAsync(Guid productId, Guid productVariantId)
         {
-            await GetProductOrThrowAsync(productId);
+            return await _souqifyDbContext.ProductVariants.FirstOrDefaultAsync(pv=>pv.Id==productVariantId && pv.ProductId==productId);
 
-            return await _souqifyDbContext.ProductVariants.FindAsync(productVariantId);
+        }
+
+        public async Task<IEnumerable<ProductImage>> GetProductImagesAsync(Guid productId)
+        {
+            return await _souqifyDbContext.ProductImages.Where(pi => pi.ProductId == productId).ToListAsync();
+        }
+
+        public async Task<bool> IsProductExistAsync(Guid id)
+        {
+            return await _souqifyDbContext.Products.AnyAsync(p => p.Id == id);
         }
 
         public async Task<bool> SaveChangesAsync()
@@ -93,28 +81,20 @@ namespace Souqify.Infrastructure.Repositories
             return await _souqifyDbContext.SaveChangesAsync() > 0;
         }
 
-        //private async Task<Product> GetProductWithChildrenOrThrowAsync(Guid productId)
-        //{
-        //    var product = await _souqifyDbContext.Products
-        //        .Include(p => p.Variants)
-        //        .Include(p => p.ProductImages)
-        //        .AsSplitQuery()
-        //        .FirstOrDefaultAsync(p => p.Id == productId);
-
-        //    if (product == null)
-        //        throw new Exception("No product with this id");
-
-        //    return product;
-        //}
-
-        private async Task<Product> GetProductOrThrowAsync(Guid productId)
+        public async Task<bool> IsSKUAlreadyExistsAsync(string sku,Guid currentVariantId)
         {
-            var product = await _souqifyDbContext.Products.FirstOrDefaultAsync(p => p.Id == productId);
+            return await _souqifyDbContext.ProductVariants.AnyAsync(pv => pv.SKU == sku && pv.Id!= currentVariantId);
+        }
 
-            if (product == null)
-                throw new Exception("No product with this id");
+        public async Task<decimal> GetProductBasePriceAsync(Guid productId)
+        {
+            //i used selcet to protect me bcs if the product null then the select return 0
+            return await _souqifyDbContext.Products.Where(p => p.Id == productId).Select(p=>p.BasePrice).FirstOrDefaultAsync();
+        }
 
-            return product;
+        public async Task<ProductImage?> GetMainImageAsync(Guid productId)
+        {
+            return await _souqifyDbContext.ProductImages.Where(pi => pi.IsMain && pi.ProductId==productId).FirstOrDefaultAsync();
         }
     }
 }

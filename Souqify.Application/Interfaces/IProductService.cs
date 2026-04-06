@@ -13,11 +13,11 @@ namespace Souqify.Application.Interfaces
 
         public Task<ProductDetailDto?> GetProductByIdAsync(Guid id);
 
-        public Task<List<ProductListDto>> GetFeaturedProductsAsync();
+        public Task<IEnumerable<ProductListDto>> GetFeaturedProductsAsync();
 
-        public Task<List<string>> GetBrandAsync();
+        public Task<IEnumerable<string>> GetBrandAsync();
 
-        public Task<List<CategoryDto>> GetCategoriesAsync();
+        public Task<IEnumerable<CategoryDto>> GetCategoriesAsync();
 
         public Task<AdminProductDto> CreateProductAsync(CreateProductDto createProductDto);
 

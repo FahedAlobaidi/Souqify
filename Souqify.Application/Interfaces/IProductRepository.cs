@@ -10,14 +10,19 @@ namespace Souqify.Application.Interfaces
 {
     public interface IProductRepository
     {
-        Task DeactivateProductAsync(Guid productId);
-        Task<Product> AddProductAsync(Product product);
-        Task<Product?> GetProductByIdAsync(Guid productId);
-        Task<ProductVariant> AddProductVariantAsync(Guid productId, ProductVariant productVariant);
-        Task<ProductImage> AddProductImageAsync(Guid productId, ProductImage productImage);
-        Task DeleteProductImageAsync(Guid productId, Guid productImageId);
+        Task<IEnumerable<ProductImage>> GetProductImagesAsync(Guid productId);
         Task<ProductVariant?> GetProductVariantByIdAsync(Guid productId, Guid productVariantId);
         Task<ProductImage?> GetProductImageByIdAsync(Guid productId, Guid productImageId);
+        Task<Product?> GetProductByIdAsync(Guid productId);
+        Task<decimal> GetProductBasePriceAsync(Guid productId);
+        Task<ProductImage?> GetMainImageAsync(Guid productId);
+        Task<Product> AddProductAsync(Product product);
+        Task<ProductVariant> AddProductVariantAsync(Guid productId, ProductVariant productVariant);
+        Task<ProductImage> AddProductImageAsync(Guid productId, ProductImage productImage);
+        Task<bool> IsProductExistAsync(Guid id);
+        Task<bool> IsSKUAlreadyExistsAsync(string sku, Guid currentVariantId);
+        void DeactivateProduct(Product product);
+        void DeleteProductImage(ProductImage productImage);
         Task<bool> SaveChangesAsync();
 
     }

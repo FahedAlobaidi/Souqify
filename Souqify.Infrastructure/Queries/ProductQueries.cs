@@ -1,7 +1,6 @@
 ﻿
 
 using Microsoft.EntityFrameworkCore;
-using Souqify.Application.DTOs.Admin;
 using Souqify.Application.DTOs.Image;
 using Souqify.Application.DTOs.Product;
 using Souqify.Application.DTOs.Variant;
@@ -9,7 +8,7 @@ using Souqify.Application.Interfaces;
 using Souqify.Application.Models;
 using Souqify.Domain;
 
-namespace Souqify.Infrastructure.Repositories
+namespace Souqify.Infrastructure.Queries
 {
     public class ProductQueries : IProductQueries
     {
@@ -23,7 +22,7 @@ namespace Souqify.Infrastructure.Repositories
 
         public async Task<PagedList<ProductListDto>> GetAllProductsAsync(ProductQueryParams productQueryParams)
         {
-            var collection = _souqifyDbContext.Products.AsNoTracking().Where(p=>p.IsActive);
+            var collection = _souqifyDbContext.Products.AsNoTracking().Where(p => p.IsActive);
 
 
             collection = ApplyFilter(productQueryParams, collection);
@@ -48,7 +47,7 @@ namespace Souqify.Infrastructure.Repositories
             return pagedList;
         }
 
-        
+
 
         public async Task<IEnumerable<string>> GetBrandsAsync()
         {
@@ -57,9 +56,9 @@ namespace Souqify.Infrastructure.Repositories
             return await collection.Select(p => p.Brand).Distinct().ToListAsync();
         }
 
-        public async Task<IEnumerable<ProductListDto>> GetFeaturedProductAsync()
+        public async Task<IEnumerable<ProductListDto>> GetFeaturedProductsAsync()
         {
-            var collection =  _souqifyDbContext.Products.AsNoTracking().Where(p => p.IsFeatured && p.IsActive);
+            var collection = _souqifyDbContext.Products.AsNoTracking().Where(p => p.IsFeatured && p.IsActive);
 
             return await collection.Select(p => new ProductListDto
             {
@@ -71,23 +70,6 @@ namespace Souqify.Infrastructure.Repositories
                 InStock = p.Variants.Any(v => v.StockQuantity > 0 && v.IsActive),
                 IsFeatured = p.IsFeatured,
                 MainImageUrl = p.ProductImages.Where(img => img.IsMain).Select(img => img.ImageUrl).FirstOrDefault() ?? string.Empty
-            }).ToListAsync();
-        }
-
-        public async Task<IEnumerable<LowStockDto>> GetLowStockVariantsAsync()
-        {
-            var collection = _souqifyDbContext.ProductVariants.AsNoTracking().Where(v => v.IsActive && v.Product.IsActive && v.StockQuantity<v.LowStockThreshold);
-
-            return await collection.Select(v => new LowStockDto
-            {
-                VariantId = v.Id,
-                ProductId = v.ProductId,
-                LowStockThreshold = v.LowStockThreshold,
-                Size = v.Size,
-                SKU = v.SKU,
-                Color = v.Color,
-                ProductName = v.Product.Name,
-                StockQuantity = v.StockQuantity,
             }).ToListAsync();
         }
 
@@ -104,7 +86,7 @@ namespace Souqify.Infrastructure.Repositories
                 IsFeatured = p.IsFeatured,
                 Brand = p.Brand,
                 CategoryName = p.Category.Name,
-                Variants = p.Variants.Where(v=>v.IsActive).Select(v => new VariantDto
+                Variants = p.Variants.Where(v => v.IsActive).Select(v => new VariantDto
                 {
                     Id = v.Id,
                     Size = v.Size,
@@ -115,7 +97,7 @@ namespace Souqify.Infrastructure.Repositories
                     StockQuantity = v.StockQuantity,
                     InStock = v.StockQuantity > 0
                 }).ToList(),
-                Images = p.ProductImages.Select(img => new ProductImageDto
+                Images = p.ProductImages.OrderBy(img=>img.DisplayOrder).Select(img => new ProductImageDto
                 {
                     Id = img.Id,
                     ImageUrl = img.ImageUrl,
@@ -131,8 +113,24 @@ namespace Souqify.Infrastructure.Repositories
             return product;
         }
 
+        public async Task<ProductImageDto?> GetProductImagesAsync(Guid productId, Guid imgId)
+        {
+            var collection = _souqifyDbContext.ProductImages.AsNoTracking().Where(pi => pi.ProductId == productId && pi.Id == imgId);
+
+            return await collection.Select(pi => new ProductImageDto
+            {
+                Id = pi.Id,
+                DisplayOrder = pi.DisplayOrder,
+                ImageUrl = pi.ImageUrl,
+                IsMain = pi.IsMain
+            }).FirstOrDefaultAsync();
+        }
+
         private IQueryable<Product> ApplyFilter(ProductQueryParams productQueryParams, IQueryable<Product> collection)
         {
+            //have to make sort, if the sort is null or empty it will call default
+            collection = ApplySort(productQueryParams.Sort?.Trim() ?? string.Empty, collection);
+
             if (!string.IsNullOrWhiteSpace(productQueryParams.Brand))
             {
                 collection = collection.Where(p => p.Brand == productQueryParams.Brand.Trim());
@@ -146,12 +144,7 @@ namespace Souqify.Infrastructure.Repositories
                 You never loaded the Category object into memory — it just used it for filtering in SQL.
                 */
                 collection = collection.Where(p => p.Category.Name == productQueryParams.Category.Trim());
-            }
-
-            if (!string.IsNullOrWhiteSpace(productQueryParams.Sort))
-            {
-                collection = ApplySort(productQueryParams.Sort.Trim(), collection);
-            }
+            } 
 
             if (productQueryParams.MinPrice.HasValue)
             {

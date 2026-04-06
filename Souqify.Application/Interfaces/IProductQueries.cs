@@ -1,6 +1,7 @@
 ﻿
 
 using Souqify.Application.DTOs.Admin;
+using Souqify.Application.DTOs.Image;
 using Souqify.Application.DTOs.Product;
 using Souqify.Application.Models;
 using Souqify.Domain;
@@ -11,8 +12,8 @@ namespace Souqify.Application.Interfaces
     {
         Task<PagedList<ProductListDto>> GetAllProductsAsync(ProductQueryParams productQueryParams);
         Task<ProductDetailDto?> GetProductByIdAsync(Guid productId);
-        Task<IEnumerable<ProductListDto>> GetFeaturedProductAsync();
+        Task<IEnumerable<ProductListDto>> GetFeaturedProductsAsync();
         Task<IEnumerable<string>> GetBrandsAsync();
-        Task<IEnumerable<LowStockDto>> GetLowStockVariantsAsync();
+        Task<ProductImageDto?> GetProductImagesAsync(Guid productId, Guid imgId);
     }
 }

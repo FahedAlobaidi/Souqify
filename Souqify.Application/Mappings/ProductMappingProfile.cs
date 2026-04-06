@@ -1,5 +1,7 @@
 ﻿using AutoMapper;
+using Souqify.Application.DTOs.Image;
 using Souqify.Application.DTOs.Product;
+using Souqify.Application.DTOs.Variant;
 using Souqify.Domain;
 
 namespace Souqify.Application.Mappings
@@ -12,6 +14,11 @@ namespace Souqify.Application.Mappings
             //    .ForMember(dest => dest.MainImageUrl, opt => opt.MapFrom(src => src.ProductImages.FirstOrDefault(img => img.IsMain).ImageUrl ?? string.Empty))
             //    .ForMember(dest => dest.InStock, opt => opt.MapFrom(src => src.Variants.Any(v => v.StockQuantity > 0 && v.IsActive)))
             //    .ForMember(dest => dest.CategoryName, opt => opt.MapFrom(src => src.Category.Name));
+
+            CreateMap<CreateProductDto, Product>();
+            CreateMap<CreateImageDto, ProductImage>();
+            CreateMap<CreateVariantDto, ProductVariant>();
+            CreateMap<UpdateProductDto, Product>();
         }
     }
 }
