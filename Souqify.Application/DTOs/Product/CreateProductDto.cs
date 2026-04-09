@@ -20,6 +20,6 @@ namespace Souqify.Application.DTOs.Product
 
         public required List<CreateVariantDto> Variants { get; set; }
 
-        public required List<CreateImageDto> Images { get; set; }
+        public required List<CreateImageDto> ProductImages { get; set; }
     }
 }

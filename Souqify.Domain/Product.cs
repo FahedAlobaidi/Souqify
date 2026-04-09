@@ -29,7 +29,7 @@ namespace Souqify.Domain
 
         public DateTime? UpdatedAt { get; set; } = null;
 
-        public byte[] RowVersion { get; set; } = [];//concurrency token
+        public uint RowVersion { get; set; } //concurrency token
 
         public Category? Category { get; set; }
 

@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using Souqify.Infrastructure;
@@ -11,9 +12,11 @@ using Souqify.Infrastructure;
 namespace Souqify.Infrastructure.Migrations
 {
     [DbContext(typeof(SouqifyDbContext))]
-    partial class SouqifyDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260408161721_FixRowVersion")]
+    partial class FixRowVersion
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

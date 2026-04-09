@@ -17,7 +17,7 @@ namespace Souqify.Domain
 
         public string? Color { get; set; }
 
-        public byte[] RowVersion { get; set; } = [];
+        public uint RowVersion { get; set; }
 
         public required string SKU { get; set; } = null!;//Stock Keeping Unit
 
