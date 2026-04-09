@@ -44,8 +44,6 @@ namespace Souqify.Application.Services
                 {
                     mainImg.IsMain = false; 
                 }
-
-                
             }
 
             var productImgEnt = _mapper.Map<ProductImage>(createImageDto);
@@ -226,6 +224,8 @@ namespace Souqify.Application.Services
             }
 
             _mapper.Map(updateProductDto, productEntUpdate);
+
+            productEntUpdate.UpdatedAt = DateTime.UtcNow;
 
             await _productRepository.SaveChangesAsync();
 

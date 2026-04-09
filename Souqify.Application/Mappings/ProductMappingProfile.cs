@@ -18,7 +18,7 @@ namespace Souqify.Application.Mappings
             CreateMap<CreateProductDto, Product>();
             CreateMap<CreateImageDto, ProductImage>();
             CreateMap<CreateVariantDto, ProductVariant>();
-            CreateMap<UpdateProductDto, Product>();
+            CreateMap<UpdateProductDto, Product>().ReverseMap();
         }
     }
 }

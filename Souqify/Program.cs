@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.EntityFrameworkCore;
 using Souqify.Application.Interfaces;
 using Souqify.Application.Mappings;
+using Souqify.Application.Services;
 using Souqify.Extensions;
 using Souqify.Infrastructure;
 using Souqify.Infrastructure.Queries;
@@ -18,13 +19,14 @@ builder.Services.AddSwaggerGen();
 
 builder.Services.AddAutoMapper(typeof(ProductMappingProfile).Assembly);
 
-var connectionSetring = builder.Configuration.GetConnectionString("DefaultConnection");
-builder.Services.AddDatabase(connectionSetring);
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+builder.Services.AddDatabase(connectionString);
 
 builder.Services.AddScoped<IAdminProductQueries, AdminProductQueries>();
 builder.Services.AddScoped<IProductRepository, ProductRepository>();
 builder.Services.AddScoped<IProductQueries, ProductQueries>();
 builder.Services.AddScoped<ICategoryQueries, CategoryQueries>();
+builder.Services.AddScoped<IProductService, ProductService>();
 
 var app = builder.Build();
 

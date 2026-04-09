@@ -52,7 +52,7 @@ namespace Souqify.Infrastructure.Repositories
 
         public async Task<Product?> GetProductByIdAsync(Guid productId)
         {
-            return await _souqifyDbContext.Products.Where(p=>p.Id==productId && p.IsActive).Include(p=>p.Variants.Where(v=>v.IsActive)).Include(p=>p.ProductImages).Include(p=>p.Category).AsSplitQuery().FirstOrDefaultAsync();
+            return await _souqifyDbContext.Products.Where(p=>p.Id==productId).Include(p=>p.Variants).Include(p=>p.ProductImages).Include(p=>p.Category).AsSplitQuery().FirstOrDefaultAsync();
         }
 
         public async Task<ProductImage?> GetProductImageByIdAsync(Guid productId, Guid productImageId)

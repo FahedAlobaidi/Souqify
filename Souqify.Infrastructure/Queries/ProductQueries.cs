@@ -97,7 +97,7 @@ namespace Souqify.Infrastructure.Queries
                     StockQuantity = v.StockQuantity,
                     InStock = v.StockQuantity > 0
                 }).ToList(),
-                Images = p.ProductImages.OrderBy(img=>img.DisplayOrder).Select(img => new ProductImageDto
+                ProductImages = p.ProductImages.OrderBy(img=>img.DisplayOrder).Select(img => new ProductImageDto
                 {
                     Id = img.Id,
                     ImageUrl = img.ImageUrl,

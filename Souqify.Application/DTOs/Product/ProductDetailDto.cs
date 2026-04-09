@@ -20,7 +20,7 @@ namespace Souqify.Application.DTOs.Product
 
         public string Brand { get; set; } = string.Empty;
 
-        public List<ProductImageDto> Images { get; set; } = new List<ProductImageDto>();
+        public List<ProductImageDto> ProductImages { get; set; } = new List<ProductImageDto>();
 
         public List<VariantDto> Variants { get; set; } = new List<VariantDto>();
     }
