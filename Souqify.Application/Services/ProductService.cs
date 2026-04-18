@@ -7,6 +7,7 @@ using Souqify.Application.DTOs.Variant;
 using Souqify.Application.Interfaces;
 using Souqify.Application.Models;
 using Souqify.Domain;
+using System.Reflection.Metadata;
 
 
 namespace Souqify.Application.Services
@@ -16,14 +17,16 @@ namespace Souqify.Application.Services
 
         private readonly IProductRepository _productRepository;
         private readonly ICategoryQueries _categoryQueries;
+        private readonly ICategoryRepository _categoryRepository;
         private readonly IProductQueries _productQueries;
         private readonly IAdminProductQueries _adminProductQueries;
         private readonly IMapper _mapper;
 
-        public ProductService(IProductRepository productRepository,ICategoryQueries categoryQueries,IAdminProductQueries adminProductQueries,IMapper mapper,IProductQueries productQueries)
+        public ProductService(IProductRepository productRepository,ICategoryQueries categoryQueries,ICategoryRepository categoryRepository,IAdminProductQueries adminProductQueries,IMapper mapper,IProductQueries productQueries)
         {
             _productRepository = productRepository;
             _categoryQueries = categoryQueries;
+            _categoryRepository = categoryRepository;
             _productQueries = productQueries;
             _adminProductQueries = adminProductQueries;
             _mapper = mapper;
@@ -87,6 +90,9 @@ namespace Souqify.Application.Services
         {
             //i added this ti check for duplicated SKU in the created productDto variants
             var hashedVariantsSku = new HashSet<string>();
+
+            if (!await _categoryRepository.IsCategoryExistsAsync(createProductDto.CategoryId))
+                throw new KeyNotFoundException("Wrong category id, there is no category with this id");
 
             foreach (var item in createProductDto.Variants)
             {
