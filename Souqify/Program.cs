@@ -26,6 +26,7 @@ builder.Services.AddScoped<IAdminProductQueries, AdminProductQueries>();
 builder.Services.AddScoped<IProductRepository, ProductRepository>();
 builder.Services.AddScoped<IProductQueries, ProductQueries>();
 builder.Services.AddScoped<ICategoryQueries, CategoryQueries>();
+builder.Services.AddScoped<ICategoryRepository, CategoryRepository>();
 builder.Services.AddScoped<IProductService, ProductService>();
 
 var app = builder.Build();
