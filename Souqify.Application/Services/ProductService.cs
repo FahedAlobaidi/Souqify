@@ -4,9 +4,10 @@ using Souqify.Application.DTOs.Category;
 using Souqify.Application.DTOs.Image;
 using Souqify.Application.DTOs.Product;
 using Souqify.Application.DTOs.Variant;
+using Souqify.Application.Exceptions;
 using Souqify.Application.Interfaces;
 using Souqify.Application.Models;
-using Souqify.Domain;
+using Souqify.Domain.Entities;
 using System.Reflection.Metadata;
 
 
@@ -62,7 +63,7 @@ namespace Souqify.Application.Services
         {
             if (!await _productRepository.IsProductExistAsync(productId))
             {
-                throw new KeyNotFoundException($"product with id {productId} not found");
+                throw new NotFoundException($"product with id {productId} not found");
             }
 
             if (await _productRepository.IsSKUAlreadyExistsAsync(createVariantDto.SKU, Guid.Empty))
@@ -92,19 +93,19 @@ namespace Souqify.Application.Services
             var hashedVariantsSku = new HashSet<string>();
 
             if (!await _categoryRepository.IsCategoryExistsAsync(createProductDto.CategoryId))
-                throw new KeyNotFoundException("Wrong category id, there is no category with this id");
+                throw new BadRequestException("Wrong category id, there is no category with this id");
 
             foreach (var item in createProductDto.Variants)
             {
                 if (!hashedVariantsSku.Add(item.SKU))
-                    throw new ArgumentException("there are duplicated SKU");
+                    throw new BadRequestException("there are duplicated SKU");
 
 
                 if(await _productRepository.IsSKUAlreadyExistsAsync(item.SKU,Guid.Empty))
-                    throw new ArgumentException("SKU is not unique");
+                    throw new BadRequestException("SKU is not unique");
 
                 if(createProductDto.BasePrice + item.PriceAdjustment <= 0)
-                    throw new ArgumentException("final price must be more than 0");
+                    throw new BadRequestException("final price must be more than 0");
             }
 
             var productEnt = _mapper.Map<Product>(createProductDto);

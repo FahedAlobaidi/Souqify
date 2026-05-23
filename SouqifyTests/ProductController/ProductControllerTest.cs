@@ -1,6 +1,6 @@
 ﻿using FluentAssertions;
 using Souqify.Application.DTOs.Product;
-using Souqify.Domain;
+using Souqify.Domain.Entities;
 using SouqifyTests.Helper;
 using System.Net.Http.Json;
 

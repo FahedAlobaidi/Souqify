@@ -3,9 +3,9 @@
 using FluentValidation;
 using Souqify.Application.DTOs.Product;
 
-namespace Souqify.Application.Validations
+namespace Souqify.Application.Validations.Product
 {
-    public class CreateProductValidator: AbstractValidator<CreateProductDto>
+    public class CreateProductValidator : AbstractValidator<CreateProductDto>
     {
         public CreateProductValidator()
         {
@@ -18,7 +18,7 @@ namespace Souqify.Application.Validations
             RuleForEach(p => p.Variants).SetValidator(new CreateVariantValidator());
             RuleFor(p => p.ProductImages).NotEmpty().WithMessage("At least one image is required");
             RuleForEach(p => p.ProductImages).SetValidator(new CreateImageValidator());
-            
+
         }
     }
 }

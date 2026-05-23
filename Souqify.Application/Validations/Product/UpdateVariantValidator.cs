@@ -1,12 +1,13 @@
-﻿using FluentValidation;
+﻿
+
+using FluentValidation;
 using Souqify.Application.DTOs.Variant;
 
-
-namespace Souqify.Application.Validations
+namespace Souqify.Application.Validations.Product
 {
-    public class CreateVariantValidator:AbstractValidator<CreateVariantDto>
+    public class UpdateVariantValidator : AbstractValidator<UpdateVariantDto>
     {
-        public CreateVariantValidator()
+        public UpdateVariantValidator()
         {
             RuleFor(pv => pv.Size).MaximumLength(50).When(pv => pv.Size != null);
             RuleFor(pv => pv.Color).MaximumLength(50).When(pv => pv.Color != null);

@@ -1,5 +1,5 @@
 ﻿using Souqify.Application.Models;
-using Souqify.Domain;
+using Souqify.Domain.Entities;
 using System;
 using System.Collections.Generic;
 using System.Linq;

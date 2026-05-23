@@ -1,6 +1,6 @@
 ﻿using AutoMapper;
 using Souqify.Application.DTOs.Variant;
-using Souqify.Domain;
+using Souqify.Domain.Entities;
 
 namespace Souqify.Application.Mappings
 {

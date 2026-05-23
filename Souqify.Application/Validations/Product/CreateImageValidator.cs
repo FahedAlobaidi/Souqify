@@ -2,9 +2,9 @@
 using FluentValidation;
 using Souqify.Application.DTOs.Image;
 
-namespace Souqify.Application.Validations
+namespace Souqify.Application.Validations.Product
 {
-    public class CreateImageValidator:AbstractValidator<CreateImageDto>
+    public class CreateImageValidator : AbstractValidator<CreateImageDto>
     {
         public CreateImageValidator()
         {

@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Souqify.Domain
+namespace Souqify.Domain.Entities
 {
     public class Product
     {

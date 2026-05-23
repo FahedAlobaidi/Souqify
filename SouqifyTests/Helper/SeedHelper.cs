@@ -1,6 +1,6 @@
 ﻿using Bogus;
 using Microsoft.Extensions.DependencyInjection;
-using Souqify.Domain;
+using Souqify.Domain.Entities;
 using Souqify.Infrastructure;
 using System;
 using System.Collections.Generic;

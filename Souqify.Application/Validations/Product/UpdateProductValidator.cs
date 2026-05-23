@@ -1,9 +1,9 @@
 ﻿using FluentValidation;
 using Souqify.Application.DTOs.Product;
 
-namespace Souqify.Application.Validations
+namespace Souqify.Application.Validations.Product
 {
-    public class UpdateProductValidator:AbstractValidator<UpdateProductDto>
+    public class UpdateProductValidator : AbstractValidator<UpdateProductDto>
     {
         public UpdateProductValidator()
         {
