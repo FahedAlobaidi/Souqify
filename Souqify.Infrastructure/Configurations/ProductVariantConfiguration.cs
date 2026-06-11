@@ -20,6 +20,11 @@ namespace Souqify.Infrastructure.Configurations
             builder.Property(pv => pv.LowStockThreshold).HasDefaultValue(5);
             builder.Property(pv => pv.IsActive).HasDefaultValue(true);
             builder.Property(pv => pv.RowVersion).IsRowVersion();
+
+            builder.HasMany(pv => pv.CartItems)
+                .WithOne(ci => ci.ProductVariant)
+                .HasForeignKey(ci => ci.ProductVariantId)
+                .OnDelete(DeleteBehavior.Restrict);
         }
     }
 }

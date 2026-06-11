@@ -31,6 +31,6 @@ namespace Souqify.Domain.Entities
 
         public Product? Product { get; set; }
 
-
+        public List<CartItem> CartItems { get; set; } = new List<CartItem>();
     }
 }
