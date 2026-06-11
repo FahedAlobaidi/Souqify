@@ -1,10 +1,13 @@
-﻿using Microsoft.EntityFrameworkCore;
-using Souqify.Domain;
+﻿using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
+using Souqify.Domain.Entities;
+using Souqify.Infrastructure.Identity;
 
 
 namespace Souqify.Infrastructure
 {
-    public class SouqifyDbContext: DbContext
+    public class SouqifyDbContext: IdentityDbContext<ApplicationUser,IdentityRole<Guid>,Guid>
     {
         public DbSet<Product> Products { get; set; }
 
@@ -13,6 +16,10 @@ namespace Souqify.Infrastructure
         public DbSet<ProductImage> ProductImages { get; set; }
 
         public DbSet<Category> Categories { get; set; }
+
+        public DbSet<RefreshToken> RefreshTokens { get; set; }
+
+        public DbSet<AuditLog> AuditLogs { get; set; }
 
         public SouqifyDbContext(DbContextOptions<SouqifyDbContext> options)
             : base(options)

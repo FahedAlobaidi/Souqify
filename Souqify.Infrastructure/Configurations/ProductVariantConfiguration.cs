@@ -1,6 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using Souqify.Domain;
+using Souqify.Domain.Entities;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -20,6 +20,11 @@ namespace Souqify.Infrastructure.Configurations
             builder.Property(pv => pv.LowStockThreshold).HasDefaultValue(5);
             builder.Property(pv => pv.IsActive).HasDefaultValue(true);
             builder.Property(pv => pv.RowVersion).IsRowVersion();
+
+            builder.HasMany(pv => pv.CartItems)
+                .WithOne(ci => ci.ProductVariant)
+                .HasForeignKey(ci => ci.ProductVariantId)
+                .OnDelete(DeleteBehavior.Restrict);
         }
     }
 }

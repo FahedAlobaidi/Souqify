@@ -1,6 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using Souqify.Domain;
+using Souqify.Domain.Entities;
 using System;
 using System.Collections.Generic;
 using System.Linq;

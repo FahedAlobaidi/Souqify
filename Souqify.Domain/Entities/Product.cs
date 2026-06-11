@@ -1,11 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿
 
-namespace Souqify.Domain
+namespace Souqify.Domain.Entities
 {
     public class Product
     {
@@ -36,5 +31,7 @@ namespace Souqify.Domain
         public List<ProductVariant> Variants { get; set; } = new List<ProductVariant>();
 
         public List<ProductImage> ProductImages { get; set; } = new List<ProductImage>();
+
+        public List<CartItem> CartItems { get; set; } = new List<CartItem>();
     }
 }

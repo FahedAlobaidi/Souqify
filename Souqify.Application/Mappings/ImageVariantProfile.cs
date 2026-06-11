@@ -1,6 +1,6 @@
 ﻿using AutoMapper;
 using Souqify.Application.DTOs.Image;
-using Souqify.Domain;
+using Souqify.Domain.Entities;
 using System;
 using System.Collections.Generic;
 using System.Linq;

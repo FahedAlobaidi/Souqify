@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Souqify.Domain
+namespace Souqify.Domain.Entities
 {
     public class ProductVariant
     {
@@ -13,7 +13,7 @@ namespace Souqify.Domain
 
         public Guid ProductId { get; set; }
 
-        public string? Size { get; set; } 
+        public string? Size { get; set; }
 
         public string? Color { get; set; }
 
@@ -31,6 +31,6 @@ namespace Souqify.Domain
 
         public Product? Product { get; set; }
 
-        
+        public List<CartItem> CartItems { get; set; } = new List<CartItem>();
     }
 }

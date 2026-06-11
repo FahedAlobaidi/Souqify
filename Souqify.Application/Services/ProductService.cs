@@ -4,9 +4,10 @@ using Souqify.Application.DTOs.Category;
 using Souqify.Application.DTOs.Image;
 using Souqify.Application.DTOs.Product;
 using Souqify.Application.DTOs.Variant;
+using Souqify.Application.Exceptions;
 using Souqify.Application.Interfaces;
 using Souqify.Application.Models;
-using Souqify.Domain;
+using Souqify.Domain.Entities;
 using System.Reflection.Metadata;
 
 
@@ -36,7 +37,7 @@ namespace Souqify.Application.Services
         {
             if(!await _productRepository.IsProductExistAsync(productId))
             {
-                throw new KeyNotFoundException($"product with id {productId} not found");
+                throw new NotFoundException($"product with id {productId} not found");
             }
 
             if (createImageDto.IsMain)
@@ -62,19 +63,19 @@ namespace Souqify.Application.Services
         {
             if (!await _productRepository.IsProductExistAsync(productId))
             {
-                throw new KeyNotFoundException($"product with id {productId} not found");
+                throw new NotFoundException($"product with id {productId} not found");
             }
 
             if (await _productRepository.IsSKUAlreadyExistsAsync(createVariantDto.SKU, Guid.Empty))
             {
-                throw new ArgumentException("SKU is not unique");
+                throw new BadRequestException("SKU is not unique");
             }
 
             var basePrice = await _productRepository.GetProductBasePriceAsync(productId);
 
             if(basePrice+createVariantDto.PriceAdjustment <= 0)
             {
-                throw new ArgumentException("final price must be more than 0");
+                throw new BadRequestException("final price must be more than 0");
             }
 
             var variantEnt = _mapper.Map<ProductVariant>(createVariantDto);
@@ -92,19 +93,19 @@ namespace Souqify.Application.Services
             var hashedVariantsSku = new HashSet<string>();
 
             if (!await _categoryRepository.IsCategoryExistsAsync(createProductDto.CategoryId))
-                throw new KeyNotFoundException("Wrong category id, there is no category with this id");
+                throw new BadRequestException("Wrong category id, there is no category with this id");
 
             foreach (var item in createProductDto.Variants)
             {
                 if (!hashedVariantsSku.Add(item.SKU))
-                    throw new ArgumentException("there are duplicated SKU");
+                    throw new BadRequestException("there are duplicated SKU");
 
 
                 if(await _productRepository.IsSKUAlreadyExistsAsync(item.SKU,Guid.Empty))
-                    throw new ArgumentException("SKU is not unique");
+                    throw new BadRequestException("SKU is not unique");
 
                 if(createProductDto.BasePrice + item.PriceAdjustment <= 0)
-                    throw new ArgumentException("final price must be more than 0");
+                    throw new BadRequestException("final price must be more than 0");
             }
 
             var productEnt = _mapper.Map<Product>(createProductDto);
@@ -158,7 +159,7 @@ namespace Souqify.Application.Services
 
             if(imageEnt== null)
             {
-                throw new KeyNotFoundException($"product with id {productId} or image id {imageId} not found");
+                throw new NotFoundException($"product with id {productId} or image id {imageId} not found");
             }
 
             if (!imageEnt.IsMain)
@@ -175,7 +176,7 @@ namespace Souqify.Application.Services
 
                 if (numberOfImgs == 1)
                 {
-                    throw new InvalidOperationException("cant delete the image, there is only one image left");
+                    throw new BadRequestException("cant delete the image, there is only one image left");
                 }
 
                 //this to get the display order of the next image that after the main image 
@@ -204,7 +205,7 @@ namespace Souqify.Application.Services
 
             if (productEnt == null)
             {
-                throw new KeyNotFoundException($"Product with id {id} not found");
+                throw new NotFoundException($"Product with id {id} not found");
             }
 
             productEnt.IsActive = !productEnt.IsActive;
@@ -220,13 +221,13 @@ namespace Souqify.Application.Services
 
             if (productEntUpdate == null)
             {
-                throw new KeyNotFoundException($"Product with id {productId} not found");
+                throw new NotFoundException($"Product with id {productId} not found");
             }
 
             foreach(var item in productEntUpdate.Variants)
             {
                 if(updateProductDto.BasePrice + item.PriceAdjustment <=0)
-                    throw new ArgumentException("final price must be more than 0");
+                    throw new BadRequestException("final price must be more than 0");
             }
 
             _mapper.Map(updateProductDto, productEntUpdate);
@@ -244,12 +245,12 @@ namespace Souqify.Application.Services
 
             if (variantEnt == null)
             {
-                throw new KeyNotFoundException($"Product with id {productId} or variant with id {variantId} not found");
+                throw new NotFoundException($"Product with id {productId} or variant with id {variantId} not found");
             }
 
             if (await _productRepository.IsSKUAlreadyExistsAsync(updateVariantDto.SKU, variantId))
             {
-                throw new ArgumentException("SKU is not unique");
+                throw new BadRequestException("SKU is not unique");
             }
 
             var basePrice = await _productRepository.GetProductBasePriceAsync(productId);
@@ -258,7 +259,7 @@ namespace Souqify.Application.Services
 
             if(finalPrice <= 0)
             {
-                throw new ArgumentException("final price must be more than 0");
+                throw new BadRequestException("final price must be more than 0");
             }
 
             _mapper.Map(updateVariantDto,variantEnt);

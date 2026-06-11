@@ -1,6 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Souqify.Application.Interfaces;
-using Souqify.Domain;
+using Souqify.Domain.Entities;
 
 
 namespace Souqify.Infrastructure.Repositories

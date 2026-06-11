@@ -1,11 +1,7 @@
 ﻿using AutoMapper;
 using Souqify.Application.DTOs.Category;
-using Souqify.Domain;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using Souqify.Domain.Entities;
+
 
 namespace Souqify.Application.Mappings
 {
@@ -14,6 +10,7 @@ namespace Souqify.Application.Mappings
         public CategoryMappingProfile()
         {
             //CreateMap<Category, CategoryDto>();
+            CreateMap<CreateCategoryDto, Category>();
         }
     }
 }

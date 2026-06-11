@@ -6,7 +6,7 @@ using Souqify.Application.DTOs.Product;
 using Souqify.Application.DTOs.Variant;
 using Souqify.Application.Interfaces;
 using Souqify.Application.Models;
-using Souqify.Domain;
+using Souqify.Domain.Entities;
 
 namespace Souqify.Infrastructure.Queries
 {

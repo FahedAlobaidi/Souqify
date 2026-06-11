@@ -1,10 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Souqify.Application.Interfaces;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using Souqify.Domain.Entities;
 
 namespace Souqify.Infrastructure.Repositories
 {
@@ -17,9 +13,24 @@ namespace Souqify.Infrastructure.Repositories
             _souqifyDbContext = souqifyDbContext;
         }
 
+        public void AddCategoryAsync(Category category)
+        {
+            _souqifyDbContext.Categories.Add(category);
+        }
+
         public async Task<bool> IsCategoryExistsAsync(Guid categoryId)
         {
             return await _souqifyDbContext.Categories.AnyAsync(c => c.Id == categoryId);
+        }
+
+        public async Task<bool> IsCategoryNameUnique(string name)
+        {
+            return await _souqifyDbContext.Categories.AnyAsync(c => c.Name == name);
+        }
+
+        public async Task<bool> SaveChangesAsync()
+        {
+            return await _souqifyDbContext.SaveChangesAsync() > 0;
         }
     }
 }
