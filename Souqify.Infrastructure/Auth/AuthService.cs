@@ -178,9 +178,12 @@ namespace Souqify.Infrastructure.Auth
                     throw new BadRequestException(errors);
                 }
 
+                var authResponse= await CreateAuthResponse(user);
+
                 await transaction.CommitAsync();
 
-                return await CreateAuthResponse(user);
+                return authResponse;
+                
             }
             catch
             {
