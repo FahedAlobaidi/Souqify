@@ -61,7 +61,7 @@ namespace Souqify.Middlewares
 
 
 
-            ///this is the old way its has so many duplicated code thats why i make is as above
+            ///this is the old way its has so many duplicated code thats why i make it as above
 
             //try
             //{

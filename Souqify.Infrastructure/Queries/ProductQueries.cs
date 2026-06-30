@@ -1,6 +1,8 @@
 ﻿
 
 using Microsoft.EntityFrameworkCore;
+using Microsoft.VisualBasic;
+using Souqify.Application.DTOs.Cart;
 using Souqify.Application.DTOs.Image;
 using Souqify.Application.DTOs.Product;
 using Souqify.Application.DTOs.Variant;
@@ -54,6 +56,33 @@ namespace Souqify.Infrastructure.Queries
             var collection = _souqifyDbContext.Products.AsNoTracking().Where(p => p.IsActive);
 
             return await collection.Select(p => p.Brand).Distinct().ToListAsync();
+        }
+
+        public async Task<IEnumerable<CartItemsDto>> GetCartItemDetailsByVariantIdsAsync(List<Guid> variantIds)
+        {
+            var collection = _souqifyDbContext.ProductVariants.AsNoTracking().Include(pv => pv.Product).Where(pv => variantIds.Contains(pv.Id) && pv.IsActive && pv.Product.IsActive);
+
+
+            //this dto filled by two sides cache and DB
+            //so every property not here it will filled in cache service from redis
+            var cartItemDto = await collection.Select(pv => new CartItemsDto
+            {
+                ProductId = pv.ProductId,
+                ProductName = pv.Product.Name,
+                Brand = pv.Product.Brand,
+
+                VariantId = pv.Id,
+                Size = pv.Size,
+                Color = pv.Color,
+                CurrentPrice = pv.PriceAdjustment + pv.Product.BasePrice,
+                InStock = pv.StockQuantity > 0,
+                AvailableStock = pv.StockQuantity,
+
+                
+                MainImgUrl = pv.Product.ProductImages.Where(pi=>pi.IsMain).Select(pi => pi.ImageUrl).FirstOrDefault()
+            }).ToListAsync();
+
+            return cartItemDto;
         }
 
         public async Task<IEnumerable<ProductListDto>> GetFeaturedProductsAsync()
