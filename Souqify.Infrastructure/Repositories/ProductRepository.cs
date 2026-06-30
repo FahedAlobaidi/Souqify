@@ -2,7 +2,6 @@
 using Souqify.Application.Interfaces;
 using Souqify.Domain.Entities;
 
-
 namespace Souqify.Infrastructure.Repositories
 {
     public class ProductRepository : IProductRepository
@@ -96,5 +95,7 @@ namespace Souqify.Infrastructure.Repositories
         {
             return await _souqifyDbContext.ProductImages.Where(pi => pi.IsMain && pi.ProductId==productId).FirstOrDefaultAsync();
         }
+
+        
     }
 }

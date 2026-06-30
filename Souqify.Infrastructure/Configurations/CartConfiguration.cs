@@ -11,7 +11,7 @@ namespace Souqify.Infrastructure.Configurations
         public void Configure(EntityTypeBuilder<Cart> builder)
         {
             builder.HasIndex(c => c.UserId).IsUnique();
-            builder.HasIndex(c => c.GuestId).IsUnique();
+            builder.Property(p => p.RowVersion).IsRowVersion();
 
             builder.HasMany(c => c.CartItems)
                 .WithOne(ci => ci.Cart)
