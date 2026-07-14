@@ -11,6 +11,6 @@ namespace Souqify.Application.Models
         public Guid? UserId { get; set; }
         public Guid? GuestId { get; set; }
 
-        public List<CachedCartItems> CartItems { get; set; } = new List<CachedCartItems>();
+        public List<CachedCartItem> CartItems { get; set; } = new List<CachedCartItem>();
     }
 }

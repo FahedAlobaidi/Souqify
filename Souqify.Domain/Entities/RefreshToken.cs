@@ -14,7 +14,7 @@
 
         public DateTime? RevokedAt { get; set; }
 
-        public string? ReplacedByToken { get; set; }
+        public string? ReplacedByToken { get; set; }//change the name to replacedtoken or last expiired token
 
         public bool IsActive => RevokedAt is null && DateTime.UtcNow < ExpiresAt;
     }

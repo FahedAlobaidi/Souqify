@@ -1,4 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using Npgsql;
 using Souqify.Application.Exceptions;
 using System.Text.Json;
 
@@ -30,6 +32,8 @@ namespace Souqify.Middlewares
                     NotFoundException => (StatusCodes.Status404NotFound, "Not found"),
                     UnauthorizedException => (StatusCodes.Status401Unauthorized, "Unauthorized"),
                     LockoutException => (StatusCodes.Status423Locked, "Account locked"),
+                    DbUpdateConcurrencyException =>(StatusCodes.Status409Conflict, "Your cart changed in another tab — please retry"),
+                    DbUpdateException dbEx when IsUniqueViolation(dbEx)=>(StatusCodes.Status409Conflict, "Your cart changed in another tab — please retry"),
                     _ => (StatusCodes.Status500InternalServerError, "Something went wrong")
                 };
 
@@ -59,6 +63,7 @@ namespace Souqify.Middlewares
                 await context.Response.WriteAsync(JsonSerializer.Serialize(problemDetails));
             }
 
+ 
 
 
             ///this is the old way its has so many duplicated code thats why i make it as above
@@ -133,5 +138,8 @@ namespace Souqify.Middlewares
             //    await context.Response.WriteAsync(problemDetails);
             //}
         }
+
+        private static bool IsUniqueViolation(DbUpdateException ex) =>
+            ex.InnerException is PostgresException { SqlState: "23505" };
     }
 }

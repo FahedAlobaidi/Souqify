@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using Souqify.Infrastructure;
@@ -11,9 +12,11 @@ using Souqify.Infrastructure;
 namespace Souqify.Infrastructure.Migrations
 {
     [DbContext(typeof(SouqifyDbContext))]
-    partial class SouqifyDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260708210831_FinishingCartEnt")]
+    partial class FinishingCartEnt
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -260,19 +263,13 @@ namespace Souqify.Infrastructure.Migrations
                     b.Property<int>("Quantity")
                         .HasColumnType("integer");
 
-                    b.Property<uint>("RowVersion")
-                        .IsConcurrencyToken()
-                        .ValueGeneratedOnAddOrUpdate()
-                        .HasColumnType("xid")
-                        .HasColumnName("xmin");
-
                     b.HasKey("Id");
 
                     b.HasIndex("ProductId");
 
                     b.HasIndex("ProductVariantId");
 
-                    b.HasIndex("CartId", "ProductVariantId")
+                    b.HasIndex("CartId", "ProductId", "ProductVariantId")
                         .IsUnique();
 
                     b.ToTable("CartItem", null, t =>

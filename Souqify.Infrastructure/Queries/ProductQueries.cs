@@ -58,14 +58,14 @@ namespace Souqify.Infrastructure.Queries
             return await collection.Select(p => p.Brand).Distinct().ToListAsync();
         }
 
-        public async Task<IEnumerable<CartItemsDto>> GetCartItemDetailsByVariantIdsAsync(List<Guid> variantIds)
+        public async Task<IEnumerable<CartItemDto>> GetCartItemDetailsByVariantIdsAsync(List<Guid> variantIds)
         {
-            var collection = _souqifyDbContext.ProductVariants.AsNoTracking().Include(pv => pv.Product).Where(pv => variantIds.Contains(pv.Id) && pv.IsActive && pv.Product.IsActive);
+            var collection = _souqifyDbContext.ProductVariants.AsNoTracking().Where(pv => variantIds.Contains(pv.Id) && pv.IsActive && pv.Product.IsActive);
 
 
             //this dto filled by two sides cache and DB
             //so every property not here it will filled in cache service from redis
-            var cartItemDto = await collection.Select(pv => new CartItemsDto
+            var cartItemDto = await collection.Select(pv => new CartItemDto
             {
                 ProductId = pv.ProductId,
                 ProductName = pv.Product.Name,
@@ -100,6 +100,11 @@ namespace Souqify.Infrastructure.Queries
                 IsFeatured = p.IsFeatured,
                 MainImageUrl = p.ProductImages.Where(img => img.IsMain).Select(img => img.ImageUrl).FirstOrDefault() ?? string.Empty
             }).ToListAsync();
+        }
+
+        public Task<decimal?> GetFinalPrice(Guid variantId)
+        {
+            return _souqifyDbContext.ProductVariants.AsNoTracking().Where(pv=>pv.Id==variantId && pv.IsActive && pv.Product.IsActive).Select(pv=>(decimal?)(pv.PriceAdjustment+pv.Product.BasePrice)).FirstOrDefaultAsync();
         }
 
         public async Task<ProductDetailDto?> GetProductByIdAsync(Guid productId)

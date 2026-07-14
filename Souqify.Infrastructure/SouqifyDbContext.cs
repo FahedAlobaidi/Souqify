@@ -21,6 +21,8 @@ namespace Souqify.Infrastructure
 
         public DbSet<AuditLog> AuditLogs { get; set; }
 
+        public DbSet<Cart> Carts { get; set; }
+
         public SouqifyDbContext(DbContextOptions<SouqifyDbContext> options)
             : base(options)
         {

@@ -2,7 +2,7 @@
 
 namespace Souqify.Application.Models
 {
-    public class CachedCartItems
+    public class CachedCartItem
     {
         public Guid Id { get; set; }
 

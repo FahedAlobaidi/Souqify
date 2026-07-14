@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using Souqify.Infrastructure;
@@ -11,9 +12,11 @@ using Souqify.Infrastructure;
 namespace Souqify.Infrastructure.Migrations
 {
     [DbContext(typeof(SouqifyDbContext))]
-    partial class SouqifyDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260703181203_ModifyCartEnt")]
+    partial class ModifyCartEnt
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -233,7 +236,7 @@ namespace Souqify.Infrastructure.Migrations
                     b.HasIndex("UserId")
                         .IsUnique();
 
-                    b.ToTable("Carts");
+                    b.ToTable("Cart");
                 });
 
             modelBuilder.Entity("Souqify.Domain.Entities.CartItem", b =>
@@ -248,23 +251,17 @@ namespace Souqify.Infrastructure.Migrations
                     b.Property<Guid>("CartId")
                         .HasColumnType("uuid");
 
-                    b.Property<decimal>("PriceAtAdded")
+                    b.Property<decimal>("PriceAtAdd")
                         .HasColumnType("decimal(18,2)");
 
                     b.Property<Guid>("ProductId")
                         .HasColumnType("uuid");
 
-                    b.Property<Guid>("ProductVariantId")
+                    b.Property<Guid?>("ProductVariantId")
                         .HasColumnType("uuid");
 
                     b.Property<int>("Quantity")
                         .HasColumnType("integer");
-
-                    b.Property<uint>("RowVersion")
-                        .IsConcurrencyToken()
-                        .ValueGeneratedOnAddOrUpdate()
-                        .HasColumnType("xid")
-                        .HasColumnName("xmin");
 
                     b.HasKey("Id");
 
@@ -272,7 +269,7 @@ namespace Souqify.Infrastructure.Migrations
 
                     b.HasIndex("ProductVariantId");
 
-                    b.HasIndex("CartId", "ProductVariantId")
+                    b.HasIndex("CartId", "ProductId", "ProductVariantId")
                         .IsUnique();
 
                     b.ToTable("CartItem", null, t =>
@@ -637,8 +634,7 @@ namespace Souqify.Infrastructure.Migrations
                     b.HasOne("Souqify.Domain.Entities.ProductVariant", "ProductVariant")
                         .WithMany("CartItems")
                         .HasForeignKey("ProductVariantId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.Restrict);
 
                     b.Navigation("Cart");
 

@@ -1,7 +1,11 @@
 ﻿
 using Microsoft.AspNetCore.Mvc;
 using Souqify.Application.DTOs.Cart;
+using Souqify.Application.Exceptions;
 using Souqify.Application.Interfaces;
+using Souqify.Services.Interfaces;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
 
 namespace Souqify.Controllers.Customer
 {
@@ -10,47 +14,116 @@ namespace Souqify.Controllers.Customer
     public class CartController : ControllerBase
     {
         private readonly ICartService _cartService;
+        private readonly IGuestCookieService _guestCookieService;
+        private readonly ILogger<CartController> _logger;
 
-        public CartController(ICartService cartService)
+        public CartController(ICartService cartService,IGuestCookieService guestCookieService,ILogger<CartController> logger)
         {
             _cartService = cartService;
+            _guestCookieService = guestCookieService;
+            _logger = logger;
         }
 
-        [HttpGet("{customerId}")]
-        public async Task<ActionResult<CartDto>> GetCartAsync(Guid customerId)
+        [HttpGet]
+        public async Task<ActionResult<CartDto>> GetCartAsync()
         {
-            var cartDto = await _cartService.GetCartAsync(customerId, false);
 
-            return Ok(cartDto);
+            var cart = await ResolveCartAync(_cartService.GetUserCartAsync, _cartService.GetGuestCartAsync);
+
+            return Ok(cart);
         }
 
-        [HttpPost("{customerId}")]
-        public async Task<ActionResult<CartDto>> CreateCartAsync(Guid customerId, CreateCartDto createCartDto)
+        
+
+        [HttpPost]
+        public async Task<ActionResult<CartDto>> CreateCartAsync( CreateCartDto createCartDto)
         {
-            var cartDto = await _cartService.AddCartAsync(customerId, createCartDto);
 
-            return Ok(cartDto);
+            //if (HttpContext.User.Identity?.IsAuthenticated == true)
+            //{
+            //    var userId = GetUserId();
+            //    var cartDto = await _cartService.AddUserCartAsync(userId,createCartDto);
+
+            //    return Ok(cartDto);
+            //}
+            //else
+            //{
+            //    Guid guestId = GetGuestId();
+            //    var cartDto = await _cartService.AddGuestCartAsync(guestId,createCartDto);
+
+            //    return Ok(cartDto);
+            //}
+
+            var cart = await ResolveCartAync(id => _cartService.AddUserCartAsync(id, createCartDto), id => _cartService.AddGuestCartAsync(id, createCartDto));
+            
+            return Ok(cart);
         }
 
-        [HttpPatch("{customerId}/{cartItemId}")]
-        public async Task<ActionResult<CartDto>> DecreaseCartItemAsync(Guid customerId, Guid cartItemId)
+        
+
+        [HttpPatch("{cartItemId}")]
+        public async Task<ActionResult<CartDto>> DecreaseCartItemAsync( Guid cartItemId)
         {
-            var cartDto = await _cartService.DecreaseCartItemQuantityAsync(customerId, cartItemId);
 
-            return Ok(cartDto);
+            var cart = await ResolveCartAync(id => _cartService.DecreaseUserCartItemsQuantityAsync(id, cartItemId), id => _cartService.DecreaseGuestCartItemQuantityAsync(id, cartItemId));
+
+            return Ok(cart);
         }
 
+        
 
-        [HttpDelete("{customerId}/{cartItemId}")]
-        public async Task<ActionResult<CartDto>> DeleteCartItemAsync(Guid customerId, Guid cartItemId)
+        [HttpDelete("{cartItemId}")]
+        public async Task<ActionResult<CartDto>> DeleteCartItemAsync( Guid cartItemId)
         {
-            return Ok(await _cartService.DeleteCartItemAsync(customerId, cartItemId));
+
+            var cart = await ResolveCartAync(id => _cartService.DeleteUserCartItemAsync(id, cartItemId), id => _cartService.DeleteGuestCartItemAsync(id, cartItemId));
+
+            return Ok(cart);
         }
 
-        [HttpDelete("{customerId}")]
-        public async Task<ActionResult<CartDto>> DeleteCartAsync(Guid customerId)
+        [HttpDelete]
+        public async Task<ActionResult<CartDto>> DeleteCartAsync()
         {
-            return Ok(await _cartService.DeleteCartAsync(customerId));
+
+            var cart = await ResolveCartAync( _cartService.DeleteUserCartAsync, _cartService.DeleteGuestCartAsync);
+
+            return Ok(cart);
+
         }
+
+        private async Task<CartDto> ResolveCartAync(Func<Guid, Task<CartDto>> userAction, Func<Guid, Task<CartDto>> guestAction)
+        {
+            //var authHeader = HttpContext.Request.Headers["Authorization"].ToString();
+            //var isAuth = HttpContext.User.Identity?.IsAuthenticated;
+            //_logger.LogWarning("Auth Header: {Heder} | IsAuth:{IsAuth}",authHeader,isAuth);
+
+            //foreach (var c in HttpContext.User.Claims)
+            //    _logger.LogWarning("CLAIM {Type} = {Value}", c.Type, c.Value);
+
+            if (HttpContext.User.Identity?.IsAuthenticated == true)
+            {
+                return await userAction(GetUserId());
+            }
+            else
+            {
+                return await guestAction(GetGuestId());
+            }
+        }
+
+        private Guid GetUserId()
+        {
+            var claim = HttpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value
+                ??HttpContext.User.FindFirst(JwtRegisteredClaimNames.Sub)?.Value;
+            if (claim == null || !Guid.TryParse(claim, out var id))
+                throw new UnauthorizedException("Invalid or missing user id in token");
+
+            return id;
+        }
+
+        private Guid GetGuestId()
+        {
+            return _guestCookieService.GetGuestId(HttpContext);
+        }
+        
     }
 }
