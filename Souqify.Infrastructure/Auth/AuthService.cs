@@ -101,7 +101,7 @@ namespace Souqify.Infrastructure.Auth
 
             var roles = await _userManager.GetRolesAsync(user);
 
-            refreshToken.RevokedAt = DateTime.UtcNow;
+            refreshToken.RevokedAt = DateTime.UtcNow;/**/
 
             var newRefreshTokenString = _jwtTokenService.GenerateRefreshToken();
 
@@ -126,7 +126,7 @@ namespace Souqify.Infrastructure.Auth
 
                 var accessToken = _jwtTokenService.GenerateAccessToken(user.Id,user.Email,roles.ToList());
 
-                var authResponse = new AuthResponseDto { AccessToken = accessToken, RefreshToken = newRefreshToken.Token, ExpiresAt = DateTime.UtcNow.AddMinutes(double.Parse(_configuration["Authentication:ExpirationInMinutes"]!)) };
+                var authResponse = new AuthResponseDto { UserId = user.Id, AccessToken = accessToken, RefreshToken = newRefreshToken.Token, ExpiresAt = DateTime.UtcNow.AddMinutes(double.Parse(_configuration["Authentication:ExpirationInMinutes"]!)) };
 
                 await transaction.CommitAsync();
 
@@ -214,7 +214,7 @@ namespace Souqify.Infrastructure.Auth
 
             await _refreshToken.SaveChanges();
 
-            var responseDto = new AuthResponseDto { AccessToken = token, RefreshToken = refreshTokenString, ExpiresAt = DateTime.UtcNow.AddMinutes(double.Parse(_configuration["Authentication:ExpirationInMinutes"]!)) };
+            var responseDto = new AuthResponseDto {UserId=user.Id ,AccessToken = token, RefreshToken = refreshTokenString, ExpiresAt = DateTime.UtcNow.AddMinutes(double.Parse(_configuration["Authentication:ExpirationInMinutes"]!)) };
 
             return responseDto;
         }

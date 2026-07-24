@@ -13,7 +13,8 @@ namespace Souqify.Application.Interfaces
     {
         Task<PagedList<ProductListDto>> GetAllProductsAsync(ProductQueryParams productQueryParams);
         Task<ProductDetailDto?> GetProductByIdAsync(Guid productId);
-        Task<IEnumerable<CartItemsDto>> GetCartItemDetailsByVariantIdsAsync(List<Guid> variantIds);
+        Task<IEnumerable<CartItemDto>> GetCartItemDetailsByVariantIdsAsync(List<Guid> variantIds);
+        Task<decimal?> GetFinalPrice(Guid variantId);
         Task<IEnumerable<ProductListDto>> GetFeaturedProductsAsync();
         Task<IEnumerable<string>> GetBrandsAsync();
         Task<ProductImageDto?> GetProductImagesAsync(Guid productId, Guid imgId);

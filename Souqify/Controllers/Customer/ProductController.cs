@@ -1,4 +1,6 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Souqify.Application.DTOs.Category;
 using Souqify.Application.DTOs.Product;
@@ -10,6 +12,7 @@ using System.Text.Json;
 namespace Souqify.Controllers.Customer
 {
     [Route("api/products")]
+    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
     [ApiController]
     public class ProductController : ControllerBase
     {

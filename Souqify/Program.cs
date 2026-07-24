@@ -20,6 +20,8 @@ using System.Threading.RateLimiting;
 using Souqify.Infrastructure.Auditing;
 using StackExchange.Redis;
 using Souqify.Infrastructure.Cache;
+using Souqify.Services.Interfaces;
+using Souqify.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -41,26 +43,6 @@ var audience = builder.Configuration["Authentication:Audience"]
     ?? throw new InvalidOperationException("Authentication: Audience not configured");
 var key = builder.Configuration["Authentication:SecretKey"]
     ?? throw new InvalidOperationException("Authentication: Secret key not configured");
-
-
-builder.Services.AddAuthentication(options =>
-{
-    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-}).AddJwtBearer(options =>
-{
-    options.TokenValidationParameters = new TokenValidationParameters
-    {
-        ValidateIssuer = true,
-        ValidateAudience = true,
-        ValidateIssuerSigningKey = true,
-        ValidateLifetime=true,
-        ClockSkew=TimeSpan.Zero,
-        ValidAudience = audience,
-        ValidIssuer = issuer,
-        IssuerSigningKey = new SymmetricSecurityKey(Convert.FromBase64String(key))
-    };
-});
 
 //redis
 builder.Services.AddSingleton<IConnectionMultiplexer>(sp =>
@@ -107,6 +89,28 @@ builder.Services.AddIdentity<ApplicationUser, IdentityRole<Guid>>(options =>
     options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(3);
 }).AddEntityFrameworkStores<SouqifyDbContext>();
 
+
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
+}).AddJwtBearer(options =>
+{
+    options.MapInboundClaims = false;
+    options.TokenValidationParameters = new TokenValidationParameters
+    {
+        ValidateIssuer = true,
+        ValidateAudience = true,
+        ValidateIssuerSigningKey = true,
+        ValidateLifetime = true,
+        ClockSkew = TimeSpan.Zero,
+        ValidAudience = audience,
+        ValidIssuer = issuer,
+        IssuerSigningKey = new SymmetricSecurityKey(Convert.FromBase64String(key))
+    };
+
+});
 
 //rate limiter
 builder.Services.AddRateLimiter(limiterOptions =>
@@ -216,9 +220,12 @@ builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IJwtTokenService, JwtTokenService>();
 builder.Services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
 builder.Services.AddScoped<ICartService, CartService>();
+builder.Services.AddScoped<ICartRepository, CartRepository>();
 builder.Services.AddScoped<ICacheStore, CacheStore>();
+builder.Services.AddScoped<IGuestCookieService, GuestCookieService>();
 
 
+builder.Services.AddDataProtection();
 
 var app = builder.Build();
 

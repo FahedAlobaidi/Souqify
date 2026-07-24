@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using Souqify.Infrastructure;
@@ -11,9 +12,11 @@ using Souqify.Infrastructure;
 namespace Souqify.Infrastructure.Migrations
 {
     [DbContext(typeof(SouqifyDbContext))]
-    partial class SouqifyDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260723142929_CreatingOrderNadOrderItem")]
+    partial class CreatingOrderNadOrderItem
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -789,29 +792,29 @@ namespace Souqify.Infrastructure.Migrations
                                 .IsRequired()
                                 .HasMaxLength(100)
                                 .HasColumnType("character varying(100)")
-                                .HasColumnName("ShippingCity");
+                                .HasColumnName("City");
 
                             b1.Property<string>("DeliveryNote")
                                 .HasMaxLength(300)
                                 .HasColumnType("character varying(300)")
-                                .HasColumnName("ShippingDeliveryNote");
+                                .HasColumnName("DeliveryNote");
 
                             b1.Property<string>("PostalCode")
                                 .HasMaxLength(20)
                                 .HasColumnType("character varying(20)")
-                                .HasColumnName("ShippingPostalCode");
+                                .HasColumnName("PostalCode");
 
                             b1.Property<string>("Region")
                                 .IsRequired()
                                 .HasMaxLength(100)
                                 .HasColumnType("character varying(100)")
-                                .HasColumnName("ShippingRegion");
+                                .HasColumnName("Region");
 
                             b1.Property<string>("Street")
                                 .IsRequired()
                                 .HasMaxLength(200)
                                 .HasColumnType("character varying(200)")
-                                .HasColumnName("ShippingStreet");
+                                .HasColumnName("Street");
 
                             b1.HasKey("OrderId");
 
@@ -887,31 +890,21 @@ namespace Souqify.Infrastructure.Migrations
 
                             b1.Property<string>("City")
                                 .IsRequired()
-                                .HasMaxLength(100)
-                                .HasColumnType("character varying(100)")
-                                .HasColumnName("City");
+                                .HasColumnType("text");
 
                             b1.Property<string>("DeliveryNote")
-                                .HasMaxLength(300)
-                                .HasColumnType("character varying(300)")
-                                .HasColumnName("DeliveryNote");
+                                .HasColumnType("text");
 
                             b1.Property<string>("PostalCode")
-                                .HasMaxLength(20)
-                                .HasColumnType("character varying(20)")
-                                .HasColumnName("PostalCode");
+                                .HasColumnType("text");
 
                             b1.Property<string>("Region")
                                 .IsRequired()
-                                .HasMaxLength(100)
-                                .HasColumnType("character varying(100)")
-                                .HasColumnName("Region");
+                                .HasColumnType("text");
 
                             b1.Property<string>("Street")
                                 .IsRequired()
-                                .HasMaxLength(200)
-                                .HasColumnType("character varying(200)")
-                                .HasColumnName("Street");
+                                .HasColumnType("text");
 
                             b1.HasKey("ApplicationUserId");
 

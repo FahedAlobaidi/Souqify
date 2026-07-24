@@ -21,6 +21,12 @@ namespace Souqify.Infrastructure
 
         public DbSet<AuditLog> AuditLogs { get; set; }
 
+        public DbSet<Cart> Carts { get; set; }
+
+        public DbSet<Order> Orders { get; set; }
+
+        public DbSet<OrderItem> OrderItems { get; set; }
+
         public SouqifyDbContext(DbContextOptions<SouqifyDbContext> options)
             : base(options)
         {
@@ -30,6 +36,7 @@ namespace Souqify.Infrastructure
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
+            modelBuilder.Entity<ApplicationUser>().OwnsOne(user => user.Address);
             modelBuilder.ApplyConfigurationsFromAssembly(typeof(SouqifyDbContext).Assembly);
         }
     }

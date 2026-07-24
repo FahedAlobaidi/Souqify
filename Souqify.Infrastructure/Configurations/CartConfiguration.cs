@@ -17,6 +17,11 @@ namespace Souqify.Infrastructure.Configurations
                 .WithOne(ci => ci.Cart)
                 .HasForeignKey(ci => ci.CartId)
                 .OnDelete(DeleteBehavior.Cascade);
+
+            // 2. Tell EF to load items INTO the private backing field
+            builder.Metadata
+                .FindNavigation(nameof(Cart.CartItems))
+                .SetPropertyAccessMode(PropertyAccessMode.Field);
         }
     }
 }
