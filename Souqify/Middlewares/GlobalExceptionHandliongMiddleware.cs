@@ -2,6 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using Npgsql;
 using Souqify.Application.Exceptions;
+using Souqify.Domain.Entities.Exceptions;
 using System.Text.Json;
 
 namespace Souqify.Middlewares
@@ -29,6 +30,7 @@ namespace Souqify.Middlewares
                 var (status, title) = ex switch
                 {
                     BadRequestException => (StatusCodes.Status400BadRequest, "Bad request"),
+                    DomainException=>(StatusCodes.Status409Conflict, "Invalid operation"),
                     NotFoundException => (StatusCodes.Status404NotFound, "Not found"),
                     UnauthorizedException => (StatusCodes.Status401Unauthorized, "Unauthorized"),
                     LockoutException => (StatusCodes.Status423Locked, "Account locked"),
