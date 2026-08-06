@@ -223,6 +223,9 @@ builder.Services.AddScoped<ICartService, CartService>();
 builder.Services.AddScoped<ICartRepository, CartRepository>();
 builder.Services.AddScoped<ICacheStore, CacheStore>();
 builder.Services.AddScoped<IGuestCookieService, GuestCookieService>();
+builder.Services.AddScoped<IOrderService, OrderService>();
+builder.Services.AddScoped<IOrderQueries, OrderQueries>();
+builder.Services.AddScoped<IOrderRepository, OrderRepository>();
 
 
 builder.Services.AddDataProtection();

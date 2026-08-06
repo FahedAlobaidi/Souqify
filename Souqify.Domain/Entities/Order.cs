@@ -13,6 +13,7 @@ namespace Souqify.Domain.Entities
         public Guid Id { get; private set; }
         public string OrderNumber { get; private set; } = null!;   // assigned by app layer
         public Guid UserId { get; private set; }
+        public Guid? IdempotencyKey { get;private set; }
 
         public OrderStatus Status { get; private set; }
         public PaymentStatus PaymentStatus { get; private set; }
@@ -36,7 +37,7 @@ namespace Souqify.Domain.Entities
 
         private Order() { }  // EF
 
-        public Order(Guid userId, Address shippingAddress, string contactPhone,
+        public Order(Guid userId,Guid idempotencyKey, Address shippingAddress, string contactPhone,
                      PaymentMethod paymentMethod, decimal shippingCost)
         {
             if (userId == Guid.Empty) throw new ArgumentException("Order must have an owner");
@@ -44,6 +45,7 @@ namespace Souqify.Domain.Entities
             if (shippingCost < 0) throw new ArgumentException("Shipping cost cannot be negative");
 
             Id = Guid.NewGuid();
+            IdempotencyKey = idempotencyKey;
             UserId = userId;
             ShippingAddress = shippingAddress;
             ContactPhone = contactPhone;
@@ -59,6 +61,9 @@ namespace Souqify.Domain.Entities
         // ── building the order ──
         public void AddItem(OrderItem item)
         {
+            if (Status != OrderStatus.Pending)
+                throw new DomainException("Items can only be added to a pending order");
+
             _items.Add(item);
             RecalculateTotals();
         }

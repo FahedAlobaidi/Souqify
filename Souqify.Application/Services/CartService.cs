@@ -27,7 +27,6 @@ namespace Souqify.Application.Services
         // Named so the TTL policy lives in one place instead of being sprinkled as magic
         // numbers across every write.
         private static readonly TimeSpan GuestCartTtl = TimeSpan.FromDays(7);
-        private static readonly TimeSpan UserCartCacheTtl = TimeSpan.FromDays(30);
 
         public CartService(ICacheStore cacheStore, IProductQueries productQueries, ICartRepository cartRepository, ILogger<CartService> logger)
         {
@@ -81,18 +80,7 @@ namespace Souqify.Application.Services
         /// </summary>
         public async Task<CartDto> GetUserCartAsync(Guid userId)
         {
-            var cachedCart = await _cacheStore.GetDataAsync<CachedCart>(CartKey(userId));
-
-            // Cache hit — serve from it (still re-validated against the live catalog).
-            if (cachedCart != null)
-            {
-                var liveItems = await GetLiveItemsAsync(cachedCart.CartItems.Select(ci => ci.VariantId));
-                var merged = MergeCachedItemsIntoLive(cachedCart.CartItems, liveItems, new List<CachedCartItem>());
-
-                return BuildCartDto(cachedCart.Id, merged);
-            }
-
-            // Cache miss — fall back to the source of truth.
+            
             var cartEnt = await _cartRepository.GetCartAsync(userId);
 
             if (cartEnt == null)
@@ -101,18 +89,9 @@ namespace Souqify.Application.Services
             // Entity exists but the cache was cold — build the DTO, then warm the cache.
             var live = await GetLiveItemsAsync(cartEnt.CartItems.Select(ci => ci.ProductVariantId));
             var mergedFromEntity = MergeEntityItemsIntoLive(cartEnt.CartItems.ToList(), live);
-            var toCache = CreateCacheCart(mergedFromEntity, userId);
+            
 
-            try
-            {
-                return await SetCart(toCache, mergedFromEntity, userId, UserCartCacheTtl);
-            }
-            catch (Exception ex)
-            {
-                // Cache warm failed — Postgres already has the data, so still return the cart.
-                _logger.LogWarning(ex, "Failed to warm cache for user cart {UserId}; serving from DB", userId);
-                return BuildCartDto(cartEnt.Id, mergedFromEntity);
-            }
+            return BuildCartDto(cartEnt.Id, mergedFromEntity);
         }
 
         // ─────────────────────────────────────────────────────────────────────
@@ -276,7 +255,7 @@ namespace Souqify.Application.Services
                 await _cartRepository.AddCartAsync(cartEnt);
 
             await _cartRepository.SaveChangesAsync();
-            await InvalidateUserCartCache(userId);
+            //await InvalidateUserCartCache(userId);
 
             return await GetUserCartAsync(userId);
         }
@@ -303,7 +282,7 @@ namespace Souqify.Application.Services
 
 
             await _cartRepository.SaveChangesAsync();
-            await InvalidateUserCartCache(userId);
+            //await InvalidateUserCartCache(userId);
 
             return await GetUserCartAsync(userId);
         }
@@ -337,15 +316,18 @@ namespace Souqify.Application.Services
         public async Task<CartDto> DeleteUserCartItemAsync(Guid userId, Guid cartItemId)
         {
             var cartEnt = await _cartRepository.GetCartAsync(userId)
-                ?? throw new InvalidOperationException("Cart missing for authenticated user");
+                ?? throw new BadRequestException("Cart missing for authenticated user");
 
             var cartItem = cartEnt.CartItems.FirstOrDefault(ci => ci.Id == cartItemId)
-                ?? throw new InvalidOperationException("Cart item cant be deleted, its already deleted");
+                ?? throw new BadRequestException("Cart item cant be deleted, its already deleted");
 
             cartEnt.RemoveItem(cartItem);
 
+            if (cartEnt.CartItems.Count == 0)
+                await _cartRepository.DeleteCartAsync(cartEnt);
+
             await _cartRepository.SaveChangesAsync();
-            await InvalidateUserCartCache(userId);
+            //await InvalidateUserCartCache(userId);
 
             return await GetUserCartAsync(userId);
         }
@@ -397,7 +379,7 @@ namespace Souqify.Application.Services
 
             await _cartRepository.SaveChangesAsync();
 
-            await InvalidateUserCartCache(userId);
+           // await InvalidateUserCartCache(userId);
             return EmptyCart();
         }
 
@@ -455,7 +437,7 @@ namespace Souqify.Application.Services
             await _cartRepository.SaveChangesAsync();
 
             // Drop both caches so the next read re-hydrates from the merged DB state.
-            await InvalidateUserCartCache(userId);
+            //await InvalidateUserCartCache(userId);
             await _cacheStore.RemoveDataAsync(CartKey(guestId.Value));
         }
 
@@ -532,8 +514,8 @@ namespace Souqify.Application.Services
 
         /// <summary>Drops a user's cached cart. Cache-aside over Postgres: the next read
         /// re-hydrates from the DB (the source of truth). A missing key is a no-op.</summary>
-        private async Task InvalidateUserCartCache(Guid userId) =>
-            await _cacheStore.RemoveDataAsync(CartKey(userId));
+        //private async Task InvalidateUserCartCache(Guid userId) =>
+        //    await _cacheStore.RemoveDataAsync(CartKey(userId));
 
         /// <summary>
         /// Overlays the frozen cache facts (PriceAtAdded, Quantity) from <paramref name="cachedItems"/>
@@ -587,33 +569,33 @@ namespace Souqify.Application.Services
         }
 
         /// <summary>Builds a CachedCart from response DTOs (used to warm the user cache).</summary>
-        private static CachedCart CreateCacheCart(List<CartItemDto> cartItemsDtos, Guid userId)
-        {
-            var cart = new CachedCart
-            {
-                Id = Guid.NewGuid(),
-                UserId = userId
-            };
+        //private static CachedCart CreateCacheCart(List<CartItemDto> cartItemsDtos, Guid userId)
+        //{
+        //    var cart = new CachedCart
+        //    {
+        //        Id = Guid.NewGuid(),
+        //        UserId = userId
+        //    };
 
-            foreach (var item in cartItemsDtos)
-            {
-                cart.CartItems.Add(new CachedCartItem
-                {
-                    Id = item.Id,
-                    Brand = item.Brand,
-                    ProductName = item.ProductName,
-                    ProductId = item.ProductId,
-                    VariantId = item.VariantId,
-                    Color = item.Color,
-                    Size = item.Size,
-                    MainImgUrl = item.MainImgUrl,
-                    PriceAtAdded = item.PriceAtAdded,
-                    Quantity = item.Quantity
-                });
-            }
+        //    foreach (var item in cartItemsDtos)
+        //    {
+        //        cart.CartItems.Add(new CachedCartItem
+        //        {
+        //            Id = item.Id,
+        //            Brand = item.Brand,
+        //            ProductName = item.ProductName,
+        //            ProductId = item.ProductId,
+        //            VariantId = item.VariantId,
+        //            Color = item.Color,
+        //            Size = item.Size,
+        //            MainImgUrl = item.MainImgUrl,
+        //            PriceAtAdded = item.PriceAtAdded,
+        //            Quantity = item.Quantity
+        //        });
+        //    }
 
-            return cart;
-        }
+        //    return cart;
+        //}
 
         /// <summary>
         /// Removes from the cache model every item whose VariantId appears in the remove

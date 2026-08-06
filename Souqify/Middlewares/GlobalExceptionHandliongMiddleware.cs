@@ -34,8 +34,9 @@ namespace Souqify.Middlewares
                     NotFoundException => (StatusCodes.Status404NotFound, "Not found"),
                     UnauthorizedException => (StatusCodes.Status401Unauthorized, "Unauthorized"),
                     LockoutException => (StatusCodes.Status423Locked, "Account locked"),
-                    DbUpdateConcurrencyException =>(StatusCodes.Status409Conflict, "Your cart changed in another tab — please retry"),
-                    DbUpdateException dbEx when IsUniqueViolation(dbEx)=>(StatusCodes.Status409Conflict, "Your cart changed in another tab — please retry"),
+                    DuplicateIdempotencyKeyException=>(StatusCodes.Status409Conflict, "This request was already processed"),
+                    DbUpdateConcurrencyException =>(StatusCodes.Status409Conflict, "This item changed while you were working — please retry"),
+                    DbUpdateException dbEx when IsUniqueViolation(dbEx)=>(StatusCodes.Status409Conflict, "This item changed while you were working — please retry"),
                     _ => (StatusCodes.Status500InternalServerError, "Something went wrong")
                 };
 
