@@ -11,6 +11,7 @@ namespace Souqify.Application.DTOs.Order
         public string Status { get; set; } = null!;
         public string PaymentStatus { get; set; } = null!;
         public string PaymentMethod { get; set; } = null!;
+        public string? PaymentCheckoutUrl { get; set; }
 
         public decimal Subtotal { get; set; }
         public decimal ShippingCost { get; set; }

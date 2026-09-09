@@ -22,6 +22,9 @@ using StackExchange.Redis;
 using Souqify.Infrastructure.Cache;
 using Souqify.Services.Interfaces;
 using Souqify.Services;
+using Stripe;
+using ProductService = Souqify.Application.Services.ProductService;
+using Souqify.Infrastructure.Payment;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -110,6 +113,15 @@ builder.Services.AddAuthentication(options =>
         IssuerSigningKey = new SymmetricSecurityKey(Convert.FromBase64String(key))
     };
 
+});
+
+//Stripe registration:
+var secretKey = builder.Configuration["Stripe:SecretKey"]
+    ?? throw new InvalidOperationException("Stripe: Secret key not configured");
+
+builder.Services.AddScoped<IStripeClient>(providor =>
+{
+    return new StripeClient(secretKey);
 });
 
 //rate limiter
@@ -208,6 +220,9 @@ builder.Services.AddCors(options =>
 });
 
 
+
+
+
 //DI services
 builder.Services.AddScoped<IAdminProductQueries, AdminProductQueries>();
 builder.Services.AddScoped<IProductRepository, ProductRepository>();
@@ -226,6 +241,7 @@ builder.Services.AddScoped<IGuestCookieService, GuestCookieService>();
 builder.Services.AddScoped<IOrderService, OrderService>();
 builder.Services.AddScoped<IOrderQueries, OrderQueries>();
 builder.Services.AddScoped<IOrderRepository, OrderRepository>();
+builder.Services.AddScoped<IPaymentGateway, StripePaymentGateway>();
 
 
 builder.Services.AddDataProtection();

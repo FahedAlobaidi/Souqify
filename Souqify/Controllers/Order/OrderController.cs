@@ -6,6 +6,7 @@ using Souqify.Application.Exceptions;
 using Souqify.Application.Interfaces;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
+using System.Security.Cryptography.Xml;
 
 namespace Souqify.Controllers.Order
 {
@@ -37,6 +38,18 @@ namespace Souqify.Controllers.Order
         public async Task<ActionResult<IEnumerable<OrderSummaryDto>>> GetAllUserOrdersAsync()
         {
             return Ok(await _orderService.GetUserOrdersAsync(GetUserId()));
+        }
+
+        [AllowAnonymous]
+        [HttpPost("webhooks/stripe")]
+        public async Task<IActionResult> WebhookEventHandler()
+        {
+            var rawBody=await new StreamReader(HttpContext.Request.Body).ReadToEndAsync();
+            var signature = Request.Headers["Stripe-Signature"];
+
+            await _orderService.HandlePaymentEventAsync(rawBody, signature!);
+
+            return Ok();
         }
 
         [HttpPost]

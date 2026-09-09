@@ -21,6 +21,11 @@ namespace Souqify.Infrastructure.Repositories
             await _souqifyDbContext.Orders.AddAsync(order);
         }
 
+        public async Task<Order?> GetOrderBySessionIdAsync(string sessionId)
+        {
+            return await _souqifyDbContext.Orders.Where(o => o.PaymentSessionId == sessionId).Include(o=>o.Items).FirstOrDefaultAsync();
+        }
+
         public async Task<Order?> GetOrderEntById(Guid orderId,Guid userId)
         {
            return await _souqifyDbContext.Orders.Where(o => o.Id == orderId && o.UserId == userId).FirstOrDefaultAsync();

@@ -1,5 +1,6 @@
 using AutoMapper;
 using FluentAssertions;
+using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 using Souqify.Application.DTOs.Address;
 using Souqify.Application.DTOs.Cart;
@@ -22,6 +23,7 @@ namespace Souqify.UnitTest.Services
         private readonly Mock<IProductRepository> _productRepository = new();
         private readonly Mock<ICartRepository> _cartRepository = new();
         private readonly Mock<IProductQueries> _productQueries = new();
+        private readonly Mock<IPaymentGateway> _paymentGateway = new();
         private readonly IMapper _mapper;
 
         public OrderServiceTests()
@@ -37,7 +39,9 @@ namespace Souqify.UnitTest.Services
             _productRepository.Object,
             _cartRepository.Object,
             _productQueries.Object,
-            _mapper);
+            _paymentGateway.Object,
+            _mapper,
+            NullLogger<OrderService>.Instance);
 
         // ─────────────────────────────────────────────────────────────
         //  Idempotency
