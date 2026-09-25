@@ -1,6 +1,4 @@
-﻿
-
-using AutoMapper;
+﻿using AutoMapper;
 using Microsoft.Extensions.Logging;
 using Souqify.Application.DTOs.Order;
 using Souqify.Application.Exceptions;
@@ -40,81 +38,43 @@ namespace Souqify.Application.Services
         }
         public async Task<OrderDto> CreateOrderAsync(Guid userId,Guid idempotencyKey,CreateOrderDto createOrderDto)
         {
-            if (createOrderDto == null)
+            if (createOrderDto is null)
                 throw new BadRequestException("Please fill the order informations");
 
             string? stripeCheckoutUrl = null;
 
             //check for the order is it exist or not at the start
-            var orderByIdempotencyDto = await _orderQueries.GetOrderByIdempotencyKeyAsync(idempotencyKey, userId);
+            var existingOrder = await _orderQueries.GetOrderByIdempotencyKeyAsync(idempotencyKey, userId);
 
-            if (orderByIdempotencyDto != null)
+            if (existingOrder is not null)
             {
-                _logger.LogInformation("Order with key {IdempotencyKey} is already exist",idempotencyKey);
-                return orderByIdempotencyDto;
+                _logger.LogInformation("Order with key {IdempotencyKey} is already exist", idempotencyKey);
+                return existingOrder;
             }
 
             var userCart = await _cartRepository.GetCartAsync(userId);
 
-            if (userCart == null)
+            if (userCart is null)
                 throw new NotFoundException("You have no cart");
 
-            var variantIdsList = userCart.CartItems.Select(ci => ci.ProductVariantId).ToList();
+            var variantIds = userCart.CartItems.Select(ci => ci.ProductVariantId).ToList();
 
-            var variantsDict = (await _productRepository.GetListProductVariantsAsync(variantIdsList)).ToDictionary(v=>v.Id);
+            var variantsById = await GetVariantsByIdsAsync(variantIds);
 
-            //validate that the cart items are exist and have variants
-            foreach(var cartItem in userCart.CartItems)
-            {
-                if (!variantsDict.TryGetValue(cartItem.ProductVariantId, out var productVariant))
-                    throw new NotFoundException($"One of the items in your cart is no longer available. Please remove it and try again");
-
-                if(cartItem.Quantity > productVariant.StockQuantity)
-                {
-                    throw new BadRequestException("The quantity exceeds the item stock number");
-                }
-            }
-
-            var cartItemDtoDict= (await _productQueries.GetCartItemDetailsByVariantIdsAsync(variantIdsList)).ToDictionary(ci=>ci.VariantId);
+            ValidateCartInventory(userCart, variantsById);
+            
+            var cartItemDtosByVariantId = (await _productQueries.GetCartItemDetailsByVariantIdsAsync(variantIds)).ToDictionary(ci => ci.VariantId);
 
             var addressEnt = _mapper.Map<Address>(createOrderDto.ShippingAddress);
 
-            var orderEnt = new Order(userId,idempotencyKey,addressEnt,createOrderDto.ContactPhone,createOrderDto.PaymentMethod, ShippingCost);
-            orderEnt.AssignOrderNumber(GenerateOrderNumber());
+            var orderEnt=BuildOrderEnt(userId,idempotencyKey,addressEnt,createOrderDto);
 
             //this means alwayd for COD payment 
-            await AddOrderItemAndUpdateVariantStock(userCart, variantsDict, cartItemDtoDict, orderEnt);
+            await AddOrderItemAndUpdateVariantStock(userCart, variantsById, cartItemDtosByVariantId, orderEnt);
 
-            if(createOrderDto.PaymentMethod== PaymentMethod.Card)
+            if (createOrderDto.PaymentMethod == PaymentMethod.Card)
             {
-                var paymentLineItemList = new List<PaymentLineItem>();
-
-                foreach(var orderItem in orderEnt.Items)
-                {
-                    var paymentLineItem = new PaymentLineItem
-                    {
-                        ProductName=orderItem.ProductNameSnapshot,
-                        Quantity=orderItem.Quantity,
-                        UnitPrice=orderItem.UnitPrice,
-                        Variant=orderItem.VariantSnapshot,
-                        ImageUrl=orderItem.ProductImageSnapshot
-                    };
-
-                    paymentLineItemList.Add(paymentLineItem);
-                }
-
-                paymentLineItemList.Add(new PaymentLineItem
-                {
-                    ProductName="Shipping",
-                    Quantity=1,
-                    UnitPrice=orderEnt.ShippingCost,
-                });
-
-                var checkoutSessionResult = await _paymentGateway.CreateCheckoutSessionAsync(orderEnt.Id, orderEnt.TotalAmount, orderEnt.Currency, paymentLineItemList);
-
-                stripeCheckoutUrl = checkoutSessionResult.CheckoutUrl;
-
-                orderEnt.AssignPaymentSessionId(checkoutSessionResult.SessionId);
+                stripeCheckoutUrl = await CreatePaymentCheckoutSessionAsync(stripeCheckoutUrl, orderEnt);
             }
 
             try
@@ -124,24 +84,210 @@ namespace Souqify.Application.Services
                 await _cartRepository.DeleteCartAsync(userCart);
 
                 await _orderRepository.SaveChangesAsync();
-            }catch (DuplicateIdempotencyKeyException)
+            }
+            catch (DuplicateIdempotencyKeyException)
             {
                 var existedOrder = await _orderQueries.GetOrderByIdempotencyKeyAsync(idempotencyKey, userId);
-                if(existedOrder!= null) 
+                if (existedOrder != null)
                     return existedOrder;
 
                 throw;
             }
-            
 
-            var orderDto = _mapper.Map<OrderDto>(orderEnt);
-
-            if (orderEnt.PaymentMethod == PaymentMethod.Card)
-                orderDto.PaymentCheckoutUrl = stripeCheckoutUrl;
-
-            return orderDto;
+            return MapToOrderDtoWIthCheckoutUrl(orderEnt, stripeCheckoutUrl);
         }
 
+        private async Task<Dictionary<Guid, ProductVariant>> GetVariantsByIdsAsync(List<Guid> variantIds)
+        {
+            return (await _productRepository.GetListProductVariantsAsync(variantIds)).ToDictionary(v => v.Id);
+        }
+
+        private void ValidateCartInventory(Cart userCart,Dictionary<Guid,ProductVariant> variantsById)
+        {
+            foreach (var cartItem in userCart.CartItems)
+            {
+                if (!variantsById.TryGetValue(cartItem.ProductVariantId, out var productVariant))
+                    throw new NotFoundException($"One of the items in your cart is no longer available. Please remove it and try again");
+
+                if (cartItem.Quantity > productVariant.StockQuantity)
+                {
+                    throw new BadRequestException("The quantity exceeds the item stock number");
+                }
+            }
+        }
+
+        private Order BuildOrderEnt(Guid userId, Guid idempotencyKey,Address addressEnt,CreateOrderDto createOrderDto)
+        {
+            var orderEnt = new Order(userId, idempotencyKey, addressEnt, createOrderDto.ContactPhone, createOrderDto.PaymentMethod, ShippingCost);
+            orderEnt.AssignOrderNumber(GenerateOrderNumber());
+
+            return orderEnt;
+        }
+
+        private async Task<string?> CreatePaymentCheckoutSessionAsync(string? stripeCheckoutUrl, Order orderEnt)
+        {
+            var paymentLineItemList = new List<PaymentLineItem>();
+
+            foreach (var orderItem in orderEnt.Items)
+            {
+                var paymentLineItem = new PaymentLineItem
+                {
+                    ProductName = orderItem.ProductNameSnapshot,
+                    Quantity = orderItem.Quantity,
+                    UnitPrice = orderItem.UnitPrice,
+                    Variant = orderItem.VariantSnapshot,
+                    ImageUrl = orderItem.ProductImageSnapshot
+                };
+
+                paymentLineItemList.Add(paymentLineItem);
+            }
+
+            paymentLineItemList.Add(new PaymentLineItem
+            {
+                ProductName = "Shipping",
+                Quantity = 1,
+                UnitPrice = orderEnt.ShippingCost,
+            });
+
+            var checkoutSessionResult = await _paymentGateway.CreateCheckoutSessionAsync(orderEnt.Id, orderEnt.TotalAmount, orderEnt.Currency, paymentLineItemList);
+
+            stripeCheckoutUrl = checkoutSessionResult.CheckoutUrl;
+
+            orderEnt.AssignPaymentSessionId(checkoutSessionResult.SessionId);
+            return stripeCheckoutUrl;
+        }
+
+        //Succes page handler
+        public async Task<PaymentConfirmationOrderDto> ConfirmPaymentAsync(string sessionId,Guid userId)
+        {
+            var orderEnt = await _orderRepository.GetOrderBySessionIdAsync(sessionId);
+
+            if (orderEnt == null)
+            {
+                _logger.LogWarning("There is no order with order id: {sessionId}", sessionId);
+                return new PaymentConfirmationOrderDto
+                {
+                    OrderNumber = null,
+                    ConfirmationStatus = "NotFound"
+                };
+            }
+
+            if(orderEnt.UserId != userId)
+            {
+                _logger.LogWarning("Wrong user Id {userId} need to get session Id: {sessionId}", userId, sessionId);
+                return new PaymentConfirmationOrderDto
+                {
+                    OrderNumber = null,
+                    ConfirmationStatus = "NotFound"
+                };
+            }
+
+            var confirmPaymentStatus = await ConfirmPaymentStatusResult(sessionId, orderEnt);
+
+            var paymentStatus = confirmPaymentStatus switch
+            {
+                PaymentConfirmationResult.Paid => "Paid",
+                PaymentConfirmationResult.Pending => "Pending",
+                PaymentConfirmationResult.Cancelled => "Cancelled",
+                PaymentConfirmationResult.Failed => "Failed",
+            };
+
+            return new PaymentConfirmationOrderDto
+            {
+                OrderNumber = orderEnt.OrderNumber,
+                TotalAmount=orderEnt.TotalAmount,
+                Currency=orderEnt.Currency,
+                Date=orderEnt.CreatedAt,
+                ConfirmationStatus = paymentStatus
+            };
+        }
+
+        public async Task<OrderDto> ResumePaymentAsync(Guid userId, Guid orderId)
+        {
+            var orderEnt=await _orderRepository.GetOrderEntById(orderId, userId);
+
+            if(orderEnt == null)
+            {
+                _logger.LogWarning("There is no order with the session id: {orderId} for this user: {userId}", orderId, userId);
+                throw new NotFoundException($"There is no order for the user id :{userId} with orderId: {orderId}");
+            }
+
+            if (orderEnt.PaymentMethod != PaymentMethod.Card)
+            {
+                _logger.LogWarning("The payment status for order: {orderNumber} is cash on delivery", orderEnt.OrderNumber);
+                throw new BadRequestException($"The payment status for order: {orderEnt.OrderNumber} is cash on delivery");
+            }
+
+            var confirmPaymentStatus = await ConfirmPaymentStatusResult(orderEnt.PaymentSessionId!, orderEnt);
+
+            if(confirmPaymentStatus == PaymentConfirmationResult.Paid)
+            {
+                _logger.LogInformation("The order: {orderNumber} is already paid", orderEnt.OrderNumber);
+                return _mapper.Map<OrderDto>(orderEnt);
+            }
+
+            //session is opened and status is unpaid
+            if (orderEnt.HasStockReservation == true && confirmPaymentStatus==PaymentConfirmationResult.Pending)
+            {
+                var session = await _paymentGateway.GetSessionBySessionIdAsync(orderEnt.PaymentSessionId!);
+                if(session == null)
+                {
+                    throw new BadRequestException($"There is no session with {orderEnt.PaymentSessionId}");
+                }
+
+                return MapToOrderDtoWIthCheckoutUrl(orderEnt, session.CheckoutUrl);
+            }//session expired
+            else if(orderEnt.HasStockReservation==false && confirmPaymentStatus==PaymentConfirmationResult.Failed) 
+            {
+                var orderItemsIdList=orderEnt.Items.Select(x => x.ProductVariantId).ToList();
+
+                var variantsDict=(await _productRepository.GetListProductVariantsAsync(orderItemsIdList)).ToDictionary(v=>v.Id);
+
+                foreach(var item in orderEnt.Items)
+                {
+                    if (!variantsDict.TryGetValue(item.ProductVariantId, out var productVariant))
+                    {
+                        _logger.LogError("Order with number {orderNumber} has missing item {productVariantId}",
+                            orderEnt.OrderNumber, item.ProductVariantId);
+                        throw new BadRequestException($"The item with name: {item.ProductNameSnapshot},{item.VariantSnapshot} is no longer available");
+                    }
+
+                    if (item.Quantity > productVariant.StockQuantity)
+                    {
+                        throw new InsufficientStockException(new(item.ProductVariantId, item.ProductNameSnapshot, item.Quantity, productVariant.StockQuantity),
+                            $"There is a conflict between order item {item.ProductNameSnapshot} quantity {item.Quantity} and what availabel in stock");
+                    }
+
+                    productVariant.StockQuantity = productVariant.StockQuantity - item.Quantity;
+                }
+
+                orderEnt.SetReservationTrue();
+                string? stripeSessionUrl = null;
+
+                stripeSessionUrl = await CreatePaymentCheckoutSessionAsync(stripeSessionUrl, orderEnt);
+
+                await _orderRepository.SaveChangesAsync();
+
+                return MapToOrderDtoWIthCheckoutUrl(orderEnt, stripeSessionUrl);
+
+            }else if(orderEnt.HasStockReservation==true && confirmPaymentStatus == PaymentConfirmationResult.Failed)
+            {
+                string? stripeSessionUrl = null;
+
+                stripeSessionUrl = await CreatePaymentCheckoutSessionAsync(stripeSessionUrl, orderEnt);
+
+                await _orderRepository.SaveChangesAsync();
+                return MapToOrderDtoWIthCheckoutUrl(orderEnt, stripeSessionUrl);
+            }
+
+            _logger.LogWarning("This order with order number: {orderNumber} cant be paid, its order status: {orderStatus} its payment status {paymentStatus}",
+                orderEnt.OrderNumber, orderEnt.Status, confirmPaymentStatus);
+            throw new BadRequestException($"You cant continue the payment process for this order,bcs payment status is: {confirmPaymentStatus}");
+        }
+
+        
+
+        //Webhook handler
         public async Task HandlePaymentEventAsync(string rawBody, string signature)
         {
             if (rawBody == null || signature == null)
@@ -154,34 +300,16 @@ namespace Souqify.Application.Services
                 return;
 
             var orderEnt = await _orderRepository.GetOrderBySessionIdAsync(paymentEvent.SessionId);
+
             if (orderEnt == null)//Unknown session id → 200 + Warning
             {
                 _logger.LogWarning("There is no order with session id {sessionId}", paymentEvent.SessionId);
                 return;
             }
-            
+
             if (paymentEvent.EventType == PaymentEventType.Paid)
             {
-                //Replay of a paid order → 200 + LogInformation
-                if (orderEnt.PaymentStatus == PaymentStatus.Paid || orderEnt.PaymentStatus == PaymentStatus.Refunded)
-                {
-                    _logger.LogInformation("This order is already {paymentStatus}", orderEnt.PaymentStatus);
-                    return;
-                }
-
-                //Bad state → 200 + LogError
-                if (!(orderEnt.Status == OrderStatus.Pending && orderEnt.PaymentStatus == PaymentStatus.Unpaid))
-                {
-                    _logger.LogError("This order {orderId} with session id {sessionId} cant be paid", orderEnt.Id, orderEnt.PaymentSessionId);
-                    return;
-                }
-
-                orderEnt.MarkPaid();
-
-                orderEnt.Confirm();
-
-                await _orderRepository.SaveChangesAsync();
-
+                await ConfirmPaymentStatusResult(paymentEvent.SessionId, orderEnt);
             }
             else if (paymentEvent.EventType == PaymentEventType.Expired)
             {
@@ -219,9 +347,54 @@ namespace Souqify.Application.Services
                         paymentEvent.SessionId, orderEnt.OrderNumber, orderEnt.Status, orderEnt.PaymentStatus);
                     return;
                 }
-            } 
-            
-            
+            }
+        }
+
+        private async Task<PaymentConfirmationResult> ConfirmPaymentStatusResult(string sessionId,Order orderEnt)
+        {
+
+            if(orderEnt.Status== OrderStatus.Cancelled)
+            {
+                _logger.LogInformation("The order with order number: {orderNumber} is already cancelled", orderEnt.OrderNumber);
+                return PaymentConfirmationResult.Cancelled;
+            }
+
+            //Replay of a paid order → 200 + LogInformation
+            if (orderEnt.PaymentStatus == PaymentStatus.Paid || orderEnt.PaymentStatus == PaymentStatus.Refunded)
+            {
+                _logger.LogInformation("This order is already {paymentStatus}", orderEnt.PaymentStatus);
+                return PaymentConfirmationResult.Paid;
+            }
+
+            //Bad state → 200 + LogError
+            if (!(orderEnt.Status == OrderStatus.Pending && orderEnt.PaymentStatus == PaymentStatus.Unpaid))
+            {
+                _logger.LogError("This order {orderId} with session id {sessionId} cant be paid", orderEnt.Id, orderEnt.PaymentSessionId);
+                return PaymentConfirmationResult.Failed;
+            }
+
+            var sessionStatus=await _paymentGateway.GetPaymentStatusAsync(sessionId);
+
+            switch (sessionStatus)
+            {
+                case CheckoutSessionStatus.Paid:
+                    {
+                        orderEnt.MarkPaid();
+                        orderEnt.Confirm();
+                        await _orderRepository.SaveChangesAsync();
+
+                        return PaymentConfirmationResult.Paid;
+                    }
+                case CheckoutSessionStatus.Payable:
+                    return PaymentConfirmationResult.Pending;
+                case CheckoutSessionStatus.Unpayable:
+                    return PaymentConfirmationResult.Failed;
+                default:
+                    {
+                        return PaymentConfirmationResult.Unknown;
+                    }
+
+            }
         }
 
         public async Task<OrderDto> GetOrderByIdAsync(Guid orderId, Guid userId)
@@ -277,10 +450,19 @@ namespace Souqify.Application.Services
                 {
                     productVariant.StockQuantity = productVariant.StockQuantity - cartItemEnt.Quantity;
                 }
-                
+
 
                 orderEnt.AddItem(orderItemEnt);
             }
+        }
+
+        private OrderDto MapToOrderDtoWIthCheckoutUrl(Order orderEnt, string? stripeSessionUrl)
+        {
+            var orderDto = _mapper.Map<OrderDto>(orderEnt);
+
+            orderDto.PaymentCheckoutUrl = stripeSessionUrl;
+
+            return orderDto;
         }
 
         private static string GenerateOrderNumber()

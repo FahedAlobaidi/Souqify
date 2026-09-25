@@ -82,9 +82,6 @@ namespace Souqify.Domain.Entities
 
         public void AssignPaymentSessionId(string sessionId)
         {
-            if (!string.IsNullOrWhiteSpace(PaymentSessionId))
-                throw new DomainException("Session id is already assigned");
-
             if (PaymentMethod == Entities.Enums.PaymentMethod.CashOnDelivery)
                 throw new DomainException("Your payement is cash on delivery, you cant have session id");
 
@@ -159,6 +156,22 @@ namespace Souqify.Domain.Entities
                 throw new DomainException("No reservation to release");
 
             HasStockReservation = false;
+            Touch();
+        }
+
+        public void SetReservationTrue()
+        {
+            if (Status != OrderStatus.Pending)
+                throw new DomainException("Cannot release reservation on a non-pending order");
+
+            if (PaymentStatus != PaymentStatus.Unpaid)
+                throw new DomainException("Cannot release reservation on a paid order");
+
+            if (HasStockReservation==true)
+                throw new DomainException("The stock is already reserved");
+
+            HasStockReservation = true;
+            Touch();
         }
 
         //  internal 

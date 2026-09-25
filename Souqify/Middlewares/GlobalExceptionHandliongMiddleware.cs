@@ -30,6 +30,7 @@ namespace Souqify.Middlewares
                 var (status, title) = ex switch
                 {
                     BadRequestException => (StatusCodes.Status400BadRequest, "Bad request"),
+                    InsufficientStockException=>(StatusCodes.Status409Conflict,"Conflict"),
                     DomainException=>(StatusCodes.Status409Conflict, "Invalid operation"),
                     NotFoundException => (StatusCodes.Status404NotFound, "Not found"),
                     UnauthorizedException => (StatusCodes.Status401Unauthorized, "Unauthorized"),

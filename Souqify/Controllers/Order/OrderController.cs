@@ -52,6 +52,18 @@ namespace Souqify.Controllers.Order
             return Ok();
         }
 
+        [HttpPost("payment/confirm/{sessionId}")]
+        public async Task<ActionResult<PaymentConfirmationOrderDto>> ConfirmPaymentAsync(string sessionId)
+        {
+            return Ok(await _orderService.ConfirmPaymentAsync(sessionId,GetUserId()));
+        }
+
+        [HttpPost("payment/resume/{orderId}")]
+        public async Task<ActionResult<OrderDto>> ResumeOrderPayment(Guid orderId)
+        {
+            return Ok(await _orderService.ResumePaymentAsync(GetUserId(), orderId));
+        }
+
         [HttpPost]
         public async Task<ActionResult<OrderDto>> CreateOrderAsync([FromHeader(Name = "Idempotency-Key")] Guid idempotencyKey, CreateOrderDto createOrderDto)
         {

@@ -28,7 +28,7 @@ namespace Souqify.Infrastructure.Repositories
 
         public async Task<Order?> GetOrderEntById(Guid orderId,Guid userId)
         {
-           return await _souqifyDbContext.Orders.Where(o => o.Id == orderId && o.UserId == userId).FirstOrDefaultAsync();
+           return await _souqifyDbContext.Orders.Where(o => o.Id == orderId && o.UserId == userId).Include(o=>o.Items).FirstOrDefaultAsync();
         }
 
         public async Task<bool> SaveChangesAsync()

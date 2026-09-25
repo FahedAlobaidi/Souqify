@@ -50,7 +50,26 @@ namespace Souqify.Infrastructure.Payment
             };
         }
 
-        
+        public async Task<CheckoutSessionResult> GetSessionBySessionIdAsync(string sessionId)
+        {
+            var service = new SessionService(_stripeClient);
+
+            try
+            {
+                var session=await service.GetAsync(sessionId);
+
+                return new CheckoutSessionResult
+                {
+                    SessionId = session.Id,
+                    CheckoutUrl = session.Url
+                };
+
+            }catch (StripeException ex) when (ex.StripeError?.Type == "invalid_request_error")
+            {
+                _logger.LogWarning("There is no stripe session with Id: {sessionId}", sessionId);
+                return new CheckoutSessionResult { };   // session id doesn't exist at Stripe
+            }
+        }
 
         public async Task<PaymentEvent> ParseWebhookEventAsync(string rawBody, string signature)
         {
@@ -119,6 +138,38 @@ namespace Souqify.Infrastructure.Payment
             }
         }
 
+        public async Task<CheckoutSessionStatus> GetPaymentStatusAsync(string sessionId)
+        {
+            var service = new SessionService(_stripeClient);
+            try
+            {
+                var session = await service.GetAsync(sessionId);
+
+                if (session.PaymentStatus == "paid" && session.Status=="complete")
+                {
+                    return CheckoutSessionStatus.Paid;
+                }else if(session.PaymentStatus == "unpaid" && session.Status=="open")
+                {
+                    return CheckoutSessionStatus.Payable;
+                }else if(session.Status == "expired")
+                {
+                    return CheckoutSessionStatus.Unpayable;
+                }
+                
+            }
+            catch (StripeException ex) when (ex.StripeError?.Type == "invalid_request_error")
+            {
+                return CheckoutSessionStatus.NotFound;   // session id doesn't exist at Stripe
+            }
+            /*
+            Two real Stripe combinations aren't mapped:
+            complete + unpaid — the customer finished checkout but the money is still settling. 
+            Only happens with slow payment methods like bank debits. You're card-only, so it cannot happen today.
+            no_payment_required — the session total was zero. You always add ShippingCost = 15, so your totals can never be zero.
+            */
+            return CheckoutSessionStatus.Unknown;//this is in case nothing happened
+        }
+
         private List<SessionLineItemOptions> CreateSessionLineList(decimal amount,string currency, List<PaymentLineItem> paymentLineItemList)
         {
             var sessionLineItemsList = new List<SessionLineItemOptions>();
@@ -151,9 +202,9 @@ namespace Souqify.Infrastructure.Payment
                             {
                                 Name = paymentLineItem.ProductName,
                                 Images = new List<string>
-                            {
-                                paymentLineItem.ImageUrl,
-                            },
+                                {
+                                    paymentLineItem.ImageUrl,
+                                },
                             }
 
                         }
