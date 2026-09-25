@@ -65,6 +65,11 @@ namespace Souqify.Infrastructure.Repositories
 
         }
 
+        public async Task<IEnumerable<ProductVariant>> GetListProductVariantsAsync(List<Guid> variantsIds)
+        {
+            return await _souqifyDbContext.ProductVariants.Where(pv => pv.IsActive && pv.Product.IsActive && variantsIds.Contains(pv.Id)).ToListAsync();
+        }
+
         public async Task<IEnumerable<ProductImage>> GetProductImagesAsync(Guid productId)
         {
             return await _souqifyDbContext.ProductImages.Where(pi => pi.ProductId == productId).ToListAsync();
@@ -96,6 +101,6 @@ namespace Souqify.Infrastructure.Repositories
             return await _souqifyDbContext.ProductImages.Where(pi => pi.IsMain && pi.ProductId==productId).FirstOrDefaultAsync();
         }
 
-        
+       
     }
 }

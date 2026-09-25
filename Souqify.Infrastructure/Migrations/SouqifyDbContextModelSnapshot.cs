@@ -201,7 +201,7 @@ namespace Souqify.Infrastructure.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("AuditLogs");
+                    b.ToTable("AuditLogs", (string)null);
                 });
 
             modelBuilder.Entity("Souqify.Domain.Entities.Cart", b =>
@@ -233,7 +233,7 @@ namespace Souqify.Infrastructure.Migrations
                     b.HasIndex("UserId")
                         .IsUnique();
 
-                    b.ToTable("Carts");
+                    b.ToTable("Carts", (string)null);
                 });
 
             modelBuilder.Entity("Souqify.Domain.Entities.CartItem", b =>
@@ -306,7 +306,7 @@ namespace Souqify.Infrastructure.Migrations
                     b.HasIndex("Name")
                         .IsUnique();
 
-                    b.ToTable("Categories");
+                    b.ToTable("Categories", (string)null);
                 });
 
             modelBuilder.Entity("Souqify.Domain.Entities.Order", b =>
@@ -328,6 +328,12 @@ namespace Souqify.Infrastructure.Migrations
                         .HasMaxLength(3)
                         .HasColumnType("character varying(3)");
 
+                    b.Property<bool>("HasStockReservation")
+                        .HasColumnType("boolean");
+
+                    b.Property<Guid?>("IdempotencyKey")
+                        .HasColumnType("uuid");
+
                     b.Property<string>("OrderNumber")
                         .IsRequired()
                         .HasMaxLength(30)
@@ -337,6 +343,9 @@ namespace Souqify.Infrastructure.Migrations
                         .IsRequired()
                         .HasMaxLength(20)
                         .HasColumnType("character varying(20)");
+
+                    b.Property<string>("PaymentSessionId")
+                        .HasColumnType("text");
 
                     b.Property<string>("PaymentStatus")
                         .IsRequired()
@@ -374,12 +383,18 @@ namespace Souqify.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("IdempotencyKey")
+                        .IsUnique();
+
                     b.HasIndex("OrderNumber")
+                        .IsUnique();
+
+                    b.HasIndex("PaymentSessionId")
                         .IsUnique();
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("Orders");
+                    b.ToTable("Orders", (string)null);
                 });
 
             modelBuilder.Entity("Souqify.Domain.Entities.OrderItem", b =>
@@ -431,7 +446,7 @@ namespace Souqify.Infrastructure.Migrations
 
                     b.HasIndex("OrderId");
 
-                    b.ToTable("OrderItems");
+                    b.ToTable("OrderItems", (string)null);
                 });
 
             modelBuilder.Entity("Souqify.Domain.Entities.Product", b =>
@@ -520,7 +535,7 @@ namespace Souqify.Infrastructure.Migrations
 
                     b.HasIndex("ProductId");
 
-                    b.ToTable("ProductImages");
+                    b.ToTable("ProductImages", (string)null);
                 });
 
             modelBuilder.Entity("Souqify.Domain.Entities.ProductVariant", b =>
@@ -613,7 +628,7 @@ namespace Souqify.Infrastructure.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("RefreshTokens");
+                    b.ToTable("RefreshTokens", (string)null);
                 });
 
             modelBuilder.Entity("Souqify.Infrastructure.Identity.ApplicationUser", b =>
@@ -780,7 +795,7 @@ namespace Souqify.Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.OwnsOne("Souqify.Domain.Entities.Address", "ShippingAddress", b1 =>
+                    b.OwnsOne("Souqify.Domain.Entities.Order.ShippingAddress#Souqify.Domain.Entities.Address", "ShippingAddress", b1 =>
                         {
                             b1.Property<Guid>("OrderId")
                                 .HasColumnType("uuid");
@@ -815,7 +830,7 @@ namespace Souqify.Infrastructure.Migrations
 
                             b1.HasKey("OrderId");
 
-                            b1.ToTable("Orders");
+                            b1.ToTable("Orders", (string)null);
 
                             b1.WithOwner()
                                 .HasForeignKey("OrderId");
@@ -880,7 +895,7 @@ namespace Souqify.Infrastructure.Migrations
 
             modelBuilder.Entity("Souqify.Infrastructure.Identity.ApplicationUser", b =>
                 {
-                    b.OwnsOne("Souqify.Domain.Entities.Address", "Address", b1 =>
+                    b.OwnsOne("Souqify.Infrastructure.Identity.ApplicationUser.Address#Souqify.Domain.Entities.Address", "Address", b1 =>
                         {
                             b1.Property<Guid>("ApplicationUserId")
                                 .HasColumnType("uuid");
@@ -915,7 +930,7 @@ namespace Souqify.Infrastructure.Migrations
 
                             b1.HasKey("ApplicationUserId");
 
-                            b1.ToTable("AspNetUsers");
+                            b1.ToTable("AspNetUsers", (string)null);
 
                             b1.WithOwner()
                                 .HasForeignKey("ApplicationUserId");

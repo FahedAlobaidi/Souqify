@@ -1,6 +1,4 @@
-﻿
-
-using Souqify.Application.DTOs.Admin;
+﻿using Souqify.Application.DTOs.Admin;
 using Souqify.Application.DTOs.Cart;
 using Souqify.Application.DTOs.Image;
 using Souqify.Application.DTOs.Product;

@@ -13,6 +13,9 @@ namespace Souqify.Domain.Entities
         public Guid Id { get; private set; }
         public string OrderNumber { get; private set; } = null!;   // assigned by app layer
         public Guid UserId { get; private set; }
+        public Guid? IdempotencyKey { get;private set; }
+        public bool HasStockReservation { get; private set; } = true;
+        public string? PaymentSessionId { get;private set; }
 
         public OrderStatus Status { get; private set; }
         public PaymentStatus PaymentStatus { get; private set; }
@@ -21,7 +24,7 @@ namespace Souqify.Domain.Entities
         public decimal Subtotal { get; private set; }
         public decimal ShippingCost { get; private set; }
         public decimal TotalAmount { get; private set; }
-        public string Currency { get; private set; } = "JOD";
+        public string Currency { get; private set; } = "USD";
 
         public Address ShippingAddress { get; private set; } = null!;  // owned, frozen
         public string ContactPhone { get; private set; } = null!;
@@ -36,7 +39,7 @@ namespace Souqify.Domain.Entities
 
         private Order() { }  // EF
 
-        public Order(Guid userId, Address shippingAddress, string contactPhone,
+        public Order(Guid userId,Guid idempotencyKey, Address shippingAddress, string contactPhone,
                      PaymentMethod paymentMethod, decimal shippingCost)
         {
             if (userId == Guid.Empty) throw new ArgumentException("Order must have an owner");
@@ -44,6 +47,7 @@ namespace Souqify.Domain.Entities
             if (shippingCost < 0) throw new ArgumentException("Shipping cost cannot be negative");
 
             Id = Guid.NewGuid();
+            IdempotencyKey = idempotencyKey;
             UserId = userId;
             ShippingAddress = shippingAddress;
             ContactPhone = contactPhone;
@@ -52,25 +56,39 @@ namespace Souqify.Domain.Entities
 
             Status = OrderStatus.Pending;
             PaymentStatus = PaymentStatus.Unpaid;
-            Currency = "JOD";
+            Currency = "USD";
             CreatedAt = DateTime.UtcNow;
         }
 
         // ── building the order ──
         public void AddItem(OrderItem item)
         {
+            if (Status != OrderStatus.Pending)
+                throw new DomainException("Items can only be added to a pending order");
+
             _items.Add(item);
             RecalculateTotals();
         }
 
         public void AssignOrderNumber(string orderNumber)
         {
+            //its check the property if its null then its assign the incoming order number
+            //if not null then its cant be replaced
             if (!string.IsNullOrWhiteSpace(OrderNumber))
                 throw new DomainException("Order number is already assigned");
+
             OrderNumber = orderNumber;
         }
 
-        // ── status guards (only legal transitions) ──
+        public void AssignPaymentSessionId(string sessionId)
+        {
+            if (PaymentMethod == Entities.Enums.PaymentMethod.CashOnDelivery)
+                throw new DomainException("Your payement is cash on delivery, you cant have session id");
+
+            PaymentSessionId = sessionId;
+        }
+
+        //  status guards (only legal transitions) 
         public void Confirm()
         {
             if (Status != OrderStatus.Pending)
@@ -106,14 +124,14 @@ namespace Souqify.Domain.Entities
             Touch();
         }
 
-        // ── payment guards ──
+        //  payment guards 
         public void MarkPaid()
         {
             if(Status==OrderStatus.Cancelled)
                 throw new DomainException("Cannot pay for a cancelled order");
 
-            if (PaymentStatus == PaymentStatus.Paid)
-                throw new DomainException("Order is already paid");
+            if (PaymentStatus != PaymentStatus.Unpaid)
+                throw new DomainException("Order already paid or refunded");
             PaymentStatus = PaymentStatus.Paid;
             Touch();
         }
@@ -126,7 +144,37 @@ namespace Souqify.Domain.Entities
             Touch();
         }
 
-        // ── internal ──
+        public void ReleaseReservation()
+        {
+            if (Status != OrderStatus.Pending)
+                throw new DomainException("Cannot release reservation on a non-pending order");
+
+            if (PaymentStatus != PaymentStatus.Unpaid)
+                throw new DomainException("Cannot release reservation on a paid order");
+
+            if (!HasStockReservation)
+                throw new DomainException("No reservation to release");
+
+            HasStockReservation = false;
+            Touch();
+        }
+
+        public void SetReservationTrue()
+        {
+            if (Status != OrderStatus.Pending)
+                throw new DomainException("Cannot release reservation on a non-pending order");
+
+            if (PaymentStatus != PaymentStatus.Unpaid)
+                throw new DomainException("Cannot release reservation on a paid order");
+
+            if (HasStockReservation==true)
+                throw new DomainException("The stock is already reserved");
+
+            HasStockReservation = true;
+            Touch();
+        }
+
+        //  internal 
         private void RecalculateTotals()
         {
             Subtotal = _items.Sum(i => i.LineTotal);

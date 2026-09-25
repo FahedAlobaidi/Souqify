@@ -9,7 +9,7 @@ using System.Security.Claims;
 
 namespace Souqify.Controllers.Customer
 {
-    [Route("api/cart")]
+    [Route("api/carts")]
     [ApiController]
     public class CartController : ControllerBase
     {
@@ -38,21 +38,6 @@ namespace Souqify.Controllers.Customer
         [HttpPost]
         public async Task<ActionResult<CartDto>> CreateCartAsync( CreateCartDto createCartDto)
         {
-
-            //if (HttpContext.User.Identity?.IsAuthenticated == true)
-            //{
-            //    var userId = GetUserId();
-            //    var cartDto = await _cartService.AddUserCartAsync(userId,createCartDto);
-
-            //    return Ok(cartDto);
-            //}
-            //else
-            //{
-            //    Guid guestId = GetGuestId();
-            //    var cartDto = await _cartService.AddGuestCartAsync(guestId,createCartDto);
-
-            //    return Ok(cartDto);
-            //}
 
             var cart = await ResolveCartAync(id => _cartService.AddUserCartAsync(id, createCartDto), id => _cartService.AddGuestCartAsync(id, createCartDto));
             

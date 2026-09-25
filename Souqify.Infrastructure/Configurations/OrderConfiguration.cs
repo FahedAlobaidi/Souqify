@@ -12,6 +12,9 @@ namespace Souqify.Infrastructure.Configurations
         public void Configure(EntityTypeBuilder<Order> builder)
         {
             builder.HasIndex(o => o.OrderNumber).IsUnique();
+            builder.HasIndex(o => o.IdempotencyKey).IsUnique();
+            builder.HasIndex(o => o.PaymentSessionId).IsUnique();
+
             builder.HasOne<ApplicationUser>()          
                 .WithMany()                            
                 .HasForeignKey(o => o.UserId)
