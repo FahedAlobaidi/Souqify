@@ -1,9 +1,12 @@
 ﻿using AutoMapper;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Souqify.Application.DTOs.Order;
 using Souqify.Application.Exceptions;
 using Souqify.Application.Interfaces;
+using Souqify.Application.Models.BackgroundJob;
 using Souqify.Application.Models.Payments;
+using Souqify.Application.Options;
 using Souqify.Domain.Entities;
 using Souqify.Domain.Entities.Enums;
 using System.Security.Cryptography;
@@ -18,6 +21,8 @@ namespace Souqify.Application.Services
         private readonly ICartRepository _cartRepository;
         private readonly IProductQueries _productQueries;
         private readonly IPaymentGateway _paymentGateway;
+        private readonly StaleOrderCancellationOptions _options;
+        private readonly TimeProvider _timeProvider;
         private readonly IMapper _mapper;
         private readonly ILogger<OrderService> _logger;
 
@@ -25,7 +30,7 @@ namespace Souqify.Application.Services
         private const string Alphabet = "23456789ABCDEFGHJKMNPQRSTUVWXYZ";
         private const int SuffixLength = 8;
 
-        public OrderService(IOrderRepository orderRepository, IOrderQueries orderQueries,IProductRepository productRepository, ICartRepository cartRepository,IProductQueries productQueries,IPaymentGateway paymentGateway,IMapper mapper,ILogger<OrderService> logger)
+        public OrderService(IOrderRepository orderRepository, IOrderQueries orderQueries,IProductRepository productRepository, ICartRepository cartRepository,IProductQueries productQueries,IPaymentGateway paymentGateway,IOptions<StaleOrderCancellationOptions> options, TimeProvider timeProvider, IMapper mapper,ILogger<OrderService> logger)
         {
             _orderRepository = orderRepository;
             _orderQueries = orderQueries;
@@ -33,6 +38,8 @@ namespace Souqify.Application.Services
             _cartRepository = cartRepository;
             _productQueries = productQueries;
             _paymentGateway = paymentGateway;
+            _options = options.Value;
+            _timeProvider = timeProvider;
             _mapper = mapper;
             _logger = logger;
         }
@@ -189,6 +196,7 @@ namespace Souqify.Application.Services
                 PaymentConfirmationResult.Paid => "Paid",
                 PaymentConfirmationResult.Pending => "Pending",
                 PaymentConfirmationResult.Cancelled => "Cancelled",
+                PaymentConfirmationResult.Unknown => "Unknown",
                 PaymentConfirmationResult.Failed => "Failed",
             };
 
@@ -313,40 +321,22 @@ namespace Souqify.Application.Services
             }
             else if (paymentEvent.EventType == PaymentEventType.Expired)
             {
-                if (orderEnt.Status == OrderStatus.Pending && orderEnt.PaymentStatus == PaymentStatus.Unpaid)
+                if (orderEnt.Status != OrderStatus.Pending || orderEnt.PaymentStatus != PaymentStatus.Unpaid)
                 {
-                    if (!orderEnt.HasStockReservation)
-                    {
-                        _logger.LogInformation("Reservation already released for {OrderNumber}", orderEnt.OrderNumber);
-                        return;
-                    }
-
-                    var varaintIdList = orderEnt.Items.Select(o => o.ProductVariantId).ToList();
-                    var variantsDict=(await _productRepository.GetListProductVariantsAsync(varaintIdList)).ToDictionary(v=>v.Id);
-
-                    foreach(var orderItem in orderEnt.Items)
-                    {
-                        if (!variantsDict.TryGetValue(orderItem.ProductVariantId, out var productVariant))
-                        {
-                            _logger.LogError("Order with number {orderNumber} has missing item {productVariantId}",
-                                orderEnt.OrderNumber, orderItem.ProductVariantId);
-                            continue;
-                        }
-
-                        productVariant.StockQuantity = productVariant.StockQuantity + orderItem.Quantity;
-                    }
-
-                    orderEnt.ReleaseReservation();
-
-                    await _productRepository.SaveChangesAsync();
-                }
-
-                if (orderEnt.Status!=OrderStatus.Pending || orderEnt.PaymentStatus != PaymentStatus.Unpaid)
-                {
-                    _logger.LogInformation("Session {SessionId} expired but order {OrderNumber} is {Status}/{PaymentStatus} — no action",
+                    _logger.LogInformation(
+                        "Session {SessionId} expired but order {OrderNumber} is {Status}/{PaymentStatus} — no action",
                         paymentEvent.SessionId, orderEnt.OrderNumber, orderEnt.Status, orderEnt.PaymentStatus);
                     return;
                 }
+
+                if (!orderEnt.HasStockReservation)
+                {
+                    _logger.LogInformation("Reservation already released for {OrderNumber}", orderEnt.OrderNumber);
+                    return;
+                }
+
+                await ReleaseReservedStockAsync(new List<Order> { orderEnt }, CancellationToken.None);
+                await _orderRepository.SaveChangesAsync();
             }
         }
 
@@ -387,6 +377,8 @@ namespace Souqify.Application.Services
                     }
                 case CheckoutSessionStatus.Payable:
                     return PaymentConfirmationResult.Pending;
+                case CheckoutSessionStatus.Processing:
+                    return PaymentConfirmationResult.Pending;
                 case CheckoutSessionStatus.Unpayable:
                     return PaymentConfirmationResult.Failed;
                 default:
@@ -420,6 +412,123 @@ namespace Souqify.Application.Services
         public async Task<IEnumerable<OrderSummaryDto>> GetUserOrdersAsync(Guid userId)
         {
             return await _orderQueries.GetAllUserOrdersAsync(userId);
+        }
+
+        public async Task<StaleOrdersCancelationResult> CleanupStaleOrders(PaymentMethod paymentMethod,CancellationToken cancellationToken)
+        {
+            DateTime deadline;
+            int batches = 0;
+            List<Order> cancelledOrders = new List<Order>();
+            
+
+            var timeoutHours = paymentMethod == PaymentMethod.CashOnDelivery
+                ? _options.CashOnDeliveryTime : _options.CardTime;
+
+            deadline = _timeProvider.GetUtcNow().UtcDateTime.AddHours(-timeoutHours);
+
+            while (batches < _options.MaxBatchNumberPerRun)
+            {
+                List<Order> ordersToCancel = new List<Order>();
+
+                //Stop between batches if the app shut down
+                cancellationToken.ThrowIfCancellationRequested();
+                batches++;
+
+                var staleOrders = await _orderRepository.GetStaleOrdersAsync(deadline, paymentMethod,_options.BatchSize, cancellationToken);
+
+                if (!staleOrders.Any())
+                    return BuildCleanupResult(cancelledOrders, batches, false);
+
+                foreach(var order in staleOrders)
+                {
+                    if(order.PaymentMethod==PaymentMethod.Card && order.PaymentSessionId is not null)
+                    {
+                        var result = await ConfirmPaymentStatusResult(order.PaymentSessionId, order);
+
+                        //Unknown = Stripe doesn't know the session, or sent a state we don't map (the gateway logs which one).
+                        //Cancelling it is safe while money-on-its-way is mapped to Processing -> Pending
+                        if (result == PaymentConfirmationResult.Unknown)
+                        {
+                            _logger.LogError(
+                                "Stale order {OrderNumber} cancelled although Stripe gave no clear answer for session {SessionId}",
+                                order.OrderNumber, order.PaymentSessionId);
+                        }
+                        else if (result != PaymentConfirmationResult.Failed)
+                        {
+                            _logger.LogWarning(
+                                "Stale order {OrderNumber} not cancelled: Stripe status is {Result}",
+                                order.OrderNumber, result);
+                            continue;
+                        }
+                    }
+                    ordersToCancel.Add(order);
+                }
+
+                await ReleaseReservedStockAsync(ordersToCancel, cancellationToken);
+
+                foreach (var order in ordersToCancel)
+                {
+
+                    _logger.LogInformation("Stale order with number: {OrderNumber} is cancelled.", order.OrderNumber);
+                    order.Cancel();
+                    cancelledOrders.Add(order);
+                }
+
+                await _orderRepository.SaveChangesAsync();
+
+                if (staleOrders.Count() < _options.BatchSize)
+                {
+                    return BuildCleanupResult(cancelledOrders, batches, false);
+                }
+
+            }
+            return BuildCleanupResult(cancelledOrders, batches, true);
+        }
+
+        private static StaleOrdersCancelationResult BuildCleanupResult(List<Order> cancelledOrders, int batches, bool reachedLimit)
+        {
+            return new StaleOrdersCancelationResult
+            {
+                Orders = cancelledOrders,
+                NumberOfOrdersCancelled = cancelledOrders.Count,
+                NumberOfBatches = batches,
+                ReachedLimit = reachedLimit
+            };
+        }
+
+        private async Task ReleaseReservedStockAsync(IEnumerable<Order> orders, CancellationToken cancellationToken)
+        {
+            var ordersWithReservation = orders.Where(o => o.HasStockReservation).ToList();
+
+            if (ordersWithReservation.Count == 0)
+                return;
+
+            var variantIds = ordersWithReservation
+                .SelectMany(o => o.Items)
+                .Select(i => i.ProductVariantId)
+                .Distinct()
+                .ToList();
+
+            var variantsById = (await _productRepository.GetVariantsForStockReleaseAsync(variantIds, cancellationToken))
+                .ToDictionary(v => v.Id);
+
+            foreach (var order in ordersWithReservation)
+            {
+                foreach (var item in order.Items)
+                {
+                    if (!variantsById.TryGetValue(item.ProductVariantId, out var variant))
+                    {
+                        _logger.LogError(
+                            "Order {OrderNumber}: variant {VariantId} not found, {Quantity} units not returned to stock",
+                            order.OrderNumber, item.ProductVariantId, item.Quantity);
+                        continue;
+                    }
+
+                    variant.StockQuantity += item.Quantity;
+                }
+
+                order.ReleaseReservation();
+            }
         }
 
         private async Task AddOrderItemAndUpdateVariantStock(Cart userCart, Dictionary<Guid, ProductVariant> variantsDict, Dictionary<Guid, DTOs.Cart.CartItemDto> cartItemDtoDict, Order orderEnt)

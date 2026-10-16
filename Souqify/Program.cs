@@ -25,6 +25,8 @@ using Souqify.Services;
 using Stripe;
 using ProductService = Souqify.Application.Services.ProductService;
 using Souqify.Infrastructure.Payment;
+using Souqify.Application.Options;
+using Souqify.Infrastructure.BackgroundJobs.OrderJobs;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -79,6 +81,9 @@ builder.Services.AddAutoMapper(typeof(ProductMappingProfile).Assembly);
 builder.Services.AddScoped<AuditIntercepter>();
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 builder.Services.AddDatabase(connectionString);
+
+//Hangfire extention
+builder.Services.AddBackgroundJobs(builder.Configuration, connectionString);
 
 //identity user
 builder.Services.AddIdentity<ApplicationUser, IdentityRole<Guid>>(options =>
@@ -242,6 +247,11 @@ builder.Services.AddScoped<IOrderService, OrderService>();
 builder.Services.AddScoped<IOrderQueries, OrderQueries>();
 builder.Services.AddScoped<IOrderRepository, OrderRepository>();
 builder.Services.AddScoped<IPaymentGateway, StripePaymentGateway>();
+builder.Services.AddScoped<IStaleOrderCleanupJob, StaleOrderCleanupJob>();
+
+
+builder.Services.AddOptions<StaleOrderCancellationOptions>()
+    .Bind(builder.Configuration.GetSection(StaleOrderCancellationOptions.suctionName));
 
 
 builder.Services.AddDataProtection();
@@ -310,6 +320,8 @@ app.UseCors("souqify");
 app.UseAuthentication();
 
 app.UseAuthorization();
+
+app.UseBackgroundJobs();
 
 app.UseRateLimiter();
 

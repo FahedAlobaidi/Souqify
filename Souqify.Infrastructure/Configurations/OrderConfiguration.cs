@@ -14,6 +14,7 @@ namespace Souqify.Infrastructure.Configurations
             builder.HasIndex(o => o.OrderNumber).IsUnique();
             builder.HasIndex(o => o.IdempotencyKey).IsUnique();
             builder.HasIndex(o => o.PaymentSessionId).IsUnique();
+            builder.HasIndex(o=>o.CreatedAt);
 
             builder.HasOne<ApplicationUser>()          
                 .WithMany()                            

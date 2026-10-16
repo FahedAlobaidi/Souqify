@@ -201,7 +201,7 @@ namespace Souqify.Infrastructure.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("AuditLogs", (string)null);
+                    b.ToTable("AuditLogs");
                 });
 
             modelBuilder.Entity("Souqify.Domain.Entities.Cart", b =>
@@ -233,7 +233,7 @@ namespace Souqify.Infrastructure.Migrations
                     b.HasIndex("UserId")
                         .IsUnique();
 
-                    b.ToTable("Carts", (string)null);
+                    b.ToTable("Carts");
                 });
 
             modelBuilder.Entity("Souqify.Domain.Entities.CartItem", b =>
@@ -306,7 +306,7 @@ namespace Souqify.Infrastructure.Migrations
                     b.HasIndex("Name")
                         .IsUnique();
 
-                    b.ToTable("Categories", (string)null);
+                    b.ToTable("Categories");
                 });
 
             modelBuilder.Entity("Souqify.Domain.Entities.Order", b =>
@@ -383,6 +383,8 @@ namespace Souqify.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("CreatedAt");
+
                     b.HasIndex("IdempotencyKey")
                         .IsUnique();
 
@@ -394,7 +396,7 @@ namespace Souqify.Infrastructure.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("Orders", (string)null);
+                    b.ToTable("Orders");
                 });
 
             modelBuilder.Entity("Souqify.Domain.Entities.OrderItem", b =>
@@ -446,7 +448,7 @@ namespace Souqify.Infrastructure.Migrations
 
                     b.HasIndex("OrderId");
 
-                    b.ToTable("OrderItems", (string)null);
+                    b.ToTable("OrderItems");
                 });
 
             modelBuilder.Entity("Souqify.Domain.Entities.Product", b =>
@@ -535,7 +537,7 @@ namespace Souqify.Infrastructure.Migrations
 
                     b.HasIndex("ProductId");
 
-                    b.ToTable("ProductImages", (string)null);
+                    b.ToTable("ProductImages");
                 });
 
             modelBuilder.Entity("Souqify.Domain.Entities.ProductVariant", b =>
@@ -628,7 +630,7 @@ namespace Souqify.Infrastructure.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("RefreshTokens", (string)null);
+                    b.ToTable("RefreshTokens");
                 });
 
             modelBuilder.Entity("Souqify.Infrastructure.Identity.ApplicationUser", b =>
@@ -795,7 +797,7 @@ namespace Souqify.Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.OwnsOne("Souqify.Domain.Entities.Order.ShippingAddress#Souqify.Domain.Entities.Address", "ShippingAddress", b1 =>
+                    b.OwnsOne("Souqify.Domain.Entities.Address", "ShippingAddress", b1 =>
                         {
                             b1.Property<Guid>("OrderId")
                                 .HasColumnType("uuid");
@@ -830,7 +832,7 @@ namespace Souqify.Infrastructure.Migrations
 
                             b1.HasKey("OrderId");
 
-                            b1.ToTable("Orders", (string)null);
+                            b1.ToTable("Orders");
 
                             b1.WithOwner()
                                 .HasForeignKey("OrderId");
@@ -895,7 +897,7 @@ namespace Souqify.Infrastructure.Migrations
 
             modelBuilder.Entity("Souqify.Infrastructure.Identity.ApplicationUser", b =>
                 {
-                    b.OwnsOne("Souqify.Infrastructure.Identity.ApplicationUser.Address#Souqify.Domain.Entities.Address", "Address", b1 =>
+                    b.OwnsOne("Souqify.Domain.Entities.Address", "Address", b1 =>
                         {
                             b1.Property<Guid>("ApplicationUserId")
                                 .HasColumnType("uuid");
@@ -930,7 +932,7 @@ namespace Souqify.Infrastructure.Migrations
 
                             b1.HasKey("ApplicationUserId");
 
-                            b1.ToTable("AspNetUsers", (string)null);
+                            b1.ToTable("AspNetUsers");
 
                             b1.WithOwner()
                                 .HasForeignKey("ApplicationUserId");

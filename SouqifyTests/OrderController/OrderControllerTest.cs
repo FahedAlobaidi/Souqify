@@ -57,7 +57,8 @@ namespace SouqifyTests.OrderController
             order.Status.Should().Be("Pending");
             order.PaymentStatus.Should().Be("Unpaid");
             order.PaymentMethod.Should().Be("CashOnDelivery");
-            order.Currency.Should().Be("JOD");
+            // Order uses USD while Stripe runs in test mode. Switching to JOD also changes PriceCasting (3 decimals, not 2)
+            order.Currency.Should().Be("USD");
 
             order.Items.Should().HaveCount(1);
             var line = order.Items.Single();
@@ -298,7 +299,7 @@ namespace SouqifyTests.OrderController
             //arrange
             var (token, order) = await PlaceOrderAsync();
 
-            var request = new HttpRequestMessage(HttpMethod.Get, $"/api/orders/orderNumbers/{order.OrderNumber}");
+            var request = new HttpRequestMessage(HttpMethod.Get, $"/api/orders/byNumber/{order.OrderNumber}");
             request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
             //act
@@ -318,7 +319,7 @@ namespace SouqifyTests.OrderController
 
             var (attackerToken, _) = await SeedHelper.RegisterUserAsync(_souqifyApiFactory.Services);
 
-            var request = new HttpRequestMessage(HttpMethod.Get, $"/api/orders/orderNumbers/{victimsOrder.OrderNumber}");
+            var request = new HttpRequestMessage(HttpMethod.Get, $"/api/orders/byNumber/{victimsOrder.OrderNumber}");
             request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", attackerToken);
 
             //act

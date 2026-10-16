@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Npgsql;
 using Souqify.Application.Exceptions;
 using Souqify.Application.Interfaces;
+using Souqify.Domain.Entities.Enums;
 using Order = Souqify.Domain.Entities.Order;
 
 namespace Souqify.Infrastructure.Repositories
@@ -29,6 +30,15 @@ namespace Souqify.Infrastructure.Repositories
         public async Task<Order?> GetOrderEntById(Guid orderId,Guid userId)
         {
            return await _souqifyDbContext.Orders.Where(o => o.Id == orderId && o.UserId == userId).Include(o=>o.Items).FirstOrDefaultAsync();
+        }
+
+        public async Task<List<Order>> GetStaleOrdersAsync(DateTime paymentDeadline,PaymentMethod paymentMethod,int batchSize,CancellationToken cancellationToken)
+        {
+            return await _souqifyDbContext.Orders.Where(o => o.CreatedAt < paymentDeadline && o.Status==OrderStatus.Pending && o.PaymentStatus==PaymentStatus.Unpaid && o.PaymentMethod==paymentMethod).
+                Include(o=>o.Items).
+                OrderBy(o => o.CreatedAt).
+                Take(batchSize).
+                ToListAsync(cancellationToken);
         }
 
         public async Task<bool> SaveChangesAsync()

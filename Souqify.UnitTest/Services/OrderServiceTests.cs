@@ -8,6 +8,7 @@ using Souqify.Application.DTOs.Order;
 using Souqify.Application.Exceptions;
 using Souqify.Application.Interfaces;
 using Souqify.Application.Mappings;
+using Souqify.Application.Options;
 using Souqify.Application.Services;
 using Souqify.Domain.Entities;
 using Souqify.Domain.Entities.Enums;
@@ -40,6 +41,15 @@ namespace Souqify.UnitTest.Services
             _cartRepository.Object,
             _productQueries.Object,
             _paymentGateway.Object,
+            Microsoft.Extensions.Options.Options.Create(new StaleOrderCancellationOptions
+            {
+                Enabled = true,
+                CardTime = 24,
+                CashOnDeliveryTime = 72,
+                BatchSize = 500,
+                MaxBatchNumberPerRun = 100
+            }),
+            TimeProvider.System,
             _mapper,
             NullLogger<OrderService>.Instance);
 
@@ -293,7 +303,8 @@ namespace Souqify.UnitTest.Services
             saved.IdempotencyKey.Should().Be(key);
             saved.Status.Should().Be(OrderStatus.Pending);
             saved.PaymentStatus.Should().Be(PaymentStatus.Unpaid);
-            saved.Currency.Should().Be("JOD");
+            // Order uses USD while Stripe runs in test mode. Switching to JOD also changes PriceCasting (3 decimals, not 2)
+            saved.Currency.Should().Be("USD");
             saved.OrderNumber.Should().StartWith("ORD-").And.HaveLength(21);
 
             saved.Items.Should().HaveCount(1);
