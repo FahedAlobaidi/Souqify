@@ -546,9 +546,6 @@ namespace Souqify.Infrastructure.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
-                    b.Property<string>("Color")
-                        .HasColumnType("text");
-
                     b.Property<bool>("IsActive")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("boolean")
@@ -578,18 +575,21 @@ namespace Souqify.Infrastructure.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<string>("Size")
-                        .HasColumnType("text");
-
                     b.Property<int>("StockQuantity")
                         .HasColumnType("integer");
 
-                    b.HasKey("Id");
+                    b.Property<string>("VariantName")
+                        .HasColumnType("text");
 
-                    b.HasIndex("ProductId");
+                    b.HasKey("Id");
 
                     b.HasIndex("SKU")
                         .IsUnique();
+
+                    b.HasIndex("ProductId", "VariantName")
+                        .IsUnique();
+
+                    NpgsqlIndexBuilderExtensions.AreNullsDistinct(b.HasIndex("ProductId", "VariantName"), false);
 
                     b.ToTable("ProductVariants", null, t =>
                         {

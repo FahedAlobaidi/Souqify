@@ -16,9 +16,7 @@ namespace Souqify.Application.DTOs.Admin
 
         public string SKU { get; set; } = string.Empty;
 
-        public string? Size { get; set; }
-
-        public string? Color { get; set; }
+        public string? VariantName { get; set; }
 
         public int StockQuantity { get; set; }
 

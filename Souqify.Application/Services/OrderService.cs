@@ -43,6 +43,9 @@ namespace Souqify.Application.Services
             _mapper = mapper;
             _logger = logger;
         }
+
+
+
         public async Task<OrderDto> CreateOrderAsync(Guid userId,Guid idempotencyKey,CreateOrderDto createOrderDto)
         {
             if (createOrderDto is null)
@@ -538,7 +541,7 @@ namespace Souqify.Application.Services
                 if (!cartItemDtoDict.TryGetValue(cartItemEnt.ProductVariantId, out var cartItemDto))
                     throw new NotFoundException($"One of the items in your cart is no longer available. Please remove it and try again");
 
-                var variantSnapshot = $"{cartItemDto.Color} / {cartItemDto.Size}";
+                var variantSnapshot = cartItemDto.VariantName;
                 var orderItemEnt = new OrderItem(orderEnt.Id, cartItemDto.ProductId, cartItemDto.VariantId, cartItemDto.ProductName, variantSnapshot, cartItemDto.MainImgUrl, cartItemDto.CurrentPrice, cartItemEnt.Quantity);
 
                 variantsDict.TryGetValue(cartItemEnt.ProductVariantId, out var productVariant);

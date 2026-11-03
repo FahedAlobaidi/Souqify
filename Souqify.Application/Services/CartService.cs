@@ -478,8 +478,7 @@ namespace Souqify.Application.Services
             Brand = live.Brand,
             ProductName = live.ProductName,
             PriceAtAdded = live.CurrentPrice,
-            Color = live.Color,
-            Size = live.Size,
+            VariantName = live.VariantName,
             MainImgUrl = live.MainImgUrl,
             Quantity = quantity
         };

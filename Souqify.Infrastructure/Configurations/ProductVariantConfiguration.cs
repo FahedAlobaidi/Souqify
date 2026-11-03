@@ -14,6 +14,7 @@ namespace Souqify.Infrastructure.Configurations
         public void Configure(EntityTypeBuilder<ProductVariant> builder)
         {
             builder.HasIndex(pv => pv.SKU).IsUnique();
+            builder.HasIndex(pv =>new { pv.ProductId,pv.VariantName }).IsUnique().AreNullsDistinct(false);
             builder.Property(pv => pv.SKU).IsRequired();
             builder.Property(pv => pv.PriceAdjustment).HasPrecision(18, 2).HasDefaultValue(0);
             builder.ToTable("ProductVariants", t => t.HasCheckConstraint("CK_StockQuantity_moreOrEqualZero", "\"StockQuantity\" >= 0"));

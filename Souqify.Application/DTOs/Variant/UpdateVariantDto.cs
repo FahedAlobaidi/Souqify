@@ -3,9 +3,7 @@ namespace Souqify.Application.DTOs.Variant
 {
     public class UpdateVariantDto
     {
-        public string? Size { get; set; }
-
-        public string? Color { get; set; }
+        public string? VariantName { get; set; }
 
         public string SKU { get; set; } = string.Empty;
 

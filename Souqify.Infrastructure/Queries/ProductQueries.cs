@@ -72,8 +72,7 @@ namespace Souqify.Infrastructure.Queries
                 Brand = pv.Product.Brand,
 
                 VariantId = pv.Id,
-                Size = pv.Size,
-                Color = pv.Color,
+                VariantName=pv.VariantName,
                 CurrentPrice = pv.PriceAdjustment + pv.Product.BasePrice,
                 InStock = pv.StockQuantity > 0,
                 AvailableStock = pv.StockQuantity,
@@ -123,8 +122,7 @@ namespace Souqify.Infrastructure.Queries
                 Variants = p.Variants.Where(v => v.IsActive).Select(v => new VariantDto
                 {
                     Id = v.Id,
-                    Size = v.Size,
-                    Color = v.Color,
+                    VariantName = v.VariantName,
                     SKU = v.SKU,
                     PriceAdjustment = v.PriceAdjustment,
                     FinalPrice = p.BasePrice + v.PriceAdjustment,

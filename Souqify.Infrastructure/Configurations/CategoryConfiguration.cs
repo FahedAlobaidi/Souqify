@@ -13,7 +13,7 @@ namespace Souqify.Infrastructure.Configurations
     {
         public void Configure(EntityTypeBuilder<Category> builder)
         {
-            builder.HasIndex(c => c.Name).IsUnique();
+            builder.HasIndex(c => new { c.ParentId, c.Name }).IsUnique().AreNullsDistinct(false);
             builder.Property(c => c.Name).IsRequired().HasMaxLength(100);
             builder.Property(c => c.IsActive).HasDefaultValue(true);
         }
