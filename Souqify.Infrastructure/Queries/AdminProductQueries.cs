@@ -39,8 +39,7 @@ namespace Souqify.Infrastructure.Queries
                 AllVariants = p.Variants.Select(v => new AdminVariantDto
                 {
                     Id = v.Id,
-                    Size = v.Size,
-                    Color = v.Color,
+                    VariantName = v.VariantName,
                     IsActive = v.IsActive,
                     FinalPrice = p.BasePrice + v.PriceAdjustment,
                     PriceAdjustment = v.PriceAdjustment,
@@ -69,8 +68,7 @@ namespace Souqify.Infrastructure.Queries
             return await collection.Select(pv => new AdminVariantDto
             {
                 Id = pv.Id,
-                Color = pv.Color,
-                Size = pv.Size,
+                VariantName= pv.VariantName,
                 FinalPrice = pv.Product.BasePrice + pv.PriceAdjustment,
                 InStock = pv.StockQuantity > 0,
                 StockQuantity = pv.StockQuantity,
@@ -90,9 +88,8 @@ namespace Souqify.Infrastructure.Queries
                 VariantId = v.Id,
                 ProductId = v.ProductId,
                 LowStockThreshold = v.LowStockThreshold,
-                Size = v.Size,
+                VariantName = v.VariantName,
                 SKU = v.SKU,
-                Color = v.Color,
                 ProductName = v.Product.Name,
                 StockQuantity = v.StockQuantity,
             }).ToListAsync();

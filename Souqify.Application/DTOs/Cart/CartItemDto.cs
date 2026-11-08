@@ -12,8 +12,7 @@ namespace Souqify.Application.DTOs.Cart
         public Guid ProductId { get; set; }
 
         //variant properties
-        public string? Size { get; set; }
-        public string? Color { get; set; }
+        public string? VariantName { get; set; }
         public decimal CurrentPrice { get; set; }// this price i get it from DB to see if it different from the price at added 
         public decimal PriceAtAdded { get; set; }//this is the price that labeled in the frontend when the user add the item
         public bool PriceChanged => PriceAtAdded != CurrentPrice;//this to check if (CurrentPrice and PriceAtAdded) changed or not

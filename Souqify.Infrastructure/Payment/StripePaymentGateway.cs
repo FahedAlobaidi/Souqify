@@ -154,20 +154,25 @@ namespace Souqify.Infrastructure.Payment
                 }else if(session.Status == "expired")
                 {
                     return CheckoutSessionStatus.Unpayable;
+                }else if(session.PaymentStatus =="unpaid" && session.Status == "complete")
+                {
+                    return CheckoutSessionStatus.Processing;
                 }
-                
+
+                //Still unmapped: no_payment_required (session total was zero; we always add shipping, so it can't happen today).
+                //This can't be reproduced in testing, so the log is the only evidence if it ever fires (ADR-0003)
+                _logger.LogError("Stripe session {SessionId} has an unmapped state: status {Status}, payment status {PaymentStatus}",
+                    sessionId, session.Status, session.PaymentStatus);
+
+                return CheckoutSessionStatus.Unknown;
             }
             catch (StripeException ex) when (ex.StripeError?.Type == "invalid_request_error")
             {
-                return CheckoutSessionStatus.NotFound;   // session id doesn't exist at Stripe
+                //our database holds a session id Stripe never issued: test/live key mismatch, restored database, wrong environment
+                _logger.LogError(ex, "Stripe has no checkout session {SessionId}", sessionId);
+
+                return CheckoutSessionStatus.NotFound;
             }
-            /*
-            Two real Stripe combinations aren't mapped:
-            complete + unpaid — the customer finished checkout but the money is still settling. 
-            Only happens with slow payment methods like bank debits. You're card-only, so it cannot happen today.
-            no_payment_required — the session total was zero. You always add ShippingCost = 15, so your totals can never be zero.
-            */
-            return CheckoutSessionStatus.Unknown;//this is in case nothing happened
         }
 
         private List<SessionLineItemOptions> CreateSessionLineList(decimal amount,string currency, List<PaymentLineItem> paymentLineItemList)

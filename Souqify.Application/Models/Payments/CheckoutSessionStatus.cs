@@ -8,6 +8,7 @@ namespace Souqify.Application.Models.Payments
         Payable,
         Unpayable,
         NotFound,
+        Processing,
         Unknown
     }
 }

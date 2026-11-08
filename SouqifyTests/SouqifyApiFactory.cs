@@ -18,6 +18,11 @@ namespace SouqifyTests
 
         protected override void ConfigureWebHost(IWebHostBuilder builder)
         {
+            //Turn Hangfire off, or the tests would use the dev database for Hangfire.
+            //Program.cs reads this before builder.Build(), and an environment variable is already
+            //loaded at that point. A setting added through this builder may arrive too late.
+            Environment.SetEnvironmentVariable("Hangfire__Enabled", "false");
+
             builder.ConfigureLogging(logging =>
             {
                 logging.ClearProviders();

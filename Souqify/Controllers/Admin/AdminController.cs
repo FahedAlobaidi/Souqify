@@ -14,7 +14,7 @@ using Souqify.Domain;
 namespace Souqify.Controllers.Admin
 {
     [Route("api/admin")]
-    [Authorize(AuthenticationSchemes =JwtBearerDefaults.AuthenticationScheme,Policy ="MustBeAdmin")]
+    [Authorize(AuthenticationSchemes =JwtBearerDefaults.AuthenticationScheme)]
     [ApiController]
     public class AdminController : ControllerBase
     {

@@ -1,6 +1,8 @@
 ﻿
 
 using Souqify.Application.DTOs.Order;
+using Souqify.Application.Models.BackgroundJob;
+using Souqify.Domain.Entities.Enums;
 
 namespace Souqify.Application.Interfaces
 {
@@ -12,6 +14,7 @@ namespace Souqify.Application.Interfaces
         public Task<PaymentConfirmationOrderDto> ConfirmPaymentAsync(string sessionId,Guid userId);
         public Task<IEnumerable<OrderSummaryDto>> GetUserOrdersAsync(Guid userId);
         public Task<OrderDto> GetOrderByIdAsync(Guid orderId, Guid userId);
+        public Task<StaleOrdersCancelationResult> CleanupStaleOrders(PaymentMethod paymentMethod, CancellationToken cancellationToken);
         public Task<OrderDto> GetOrderByOrderNumberAsync(string orderNumber, Guid userId);
     }
 }

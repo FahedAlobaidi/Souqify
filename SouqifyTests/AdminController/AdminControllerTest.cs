@@ -51,10 +51,9 @@ namespace SouqifyTests.AdminController
                     new CreateVariantDto
                     {
                         SKU=faker.Random.AlphaNumeric(10).ToUpper(),
-                        Color=faker.Commerce.Color(),
+                        VariantName=faker.Commerce.Color(),
                         LowStockThreshold=5,
                         PriceAdjustment=faker.Random.Int(1,10),
-                        Size=faker.PickRandom("S","M","L","XL"),
                         StockQuantity=faker.Random.Int(1,100)
                     }
                 },
@@ -104,10 +103,9 @@ namespace SouqifyTests.AdminController
                     new CreateVariantDto
                     {
                         SKU=duplicatedSKU,
-                        Color=faker.Commerce.Color(),
+                        VariantName=faker.Commerce.Color(),
                         LowStockThreshold=5,
                         PriceAdjustment=faker.Random.Int(1,10),
-                        Size=faker.PickRandom("S","M","L","XL"),
                         StockQuantity=faker.Random.Int(1,100)
                     }
                 },
@@ -137,10 +135,9 @@ namespace SouqifyTests.AdminController
                     new CreateVariantDto
                     {
                         SKU=duplicatedSKU,
-                        Color=faker.Commerce.Color(),
+                        VariantName=faker.Commerce.Color(),
                         LowStockThreshold=5,
                         PriceAdjustment=faker.Random.Int(1,10),
-                        Size=faker.PickRandom("S","M","L","XL"),
                         StockQuantity=faker.Random.Int(1,100)
                     }
                 },
@@ -179,10 +176,9 @@ namespace SouqifyTests.AdminController
                     new CreateVariantDto
                     {
                         SKU=faker.Random.AlphaNumeric(10).ToUpper(),
-                        Color=faker.Commerce.Color(),
+                        VariantName=faker.Commerce.Color(),
                         LowStockThreshold=5,
                         PriceAdjustment=faker.Random.Int(1,10),
-                        Size=faker.PickRandom("S","M","L","XL"),
                         StockQuantity=faker.Random.Int(1,100)
                     }
                 },
@@ -223,10 +219,9 @@ namespace SouqifyTests.AdminController
                     new CreateVariantDto
                     {
                         SKU=faker.Random.AlphaNumeric(10).ToUpper(),
-                        Color=faker.Commerce.Color(),
+                        VariantName=faker.Commerce.Color(),
                         LowStockThreshold=5,
                         PriceAdjustment=-10,
-                        Size=faker.PickRandom("S","M","L","XL"),
                         StockQuantity=faker.Random.Int(1,100)
                     }
                 },

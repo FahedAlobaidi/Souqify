@@ -70,6 +70,12 @@ namespace Souqify.Infrastructure.Repositories
             return await _souqifyDbContext.ProductVariants.Where(pv => pv.IsActive && pv.Product.IsActive && variantsIds.Contains(pv.Id)).ToListAsync();
         }
 
+        //no IsActive filter on purpose: a hidden product still owns its stock, so reserved stock must go back to it
+        public async Task<IEnumerable<ProductVariant>> GetVariantsForStockReleaseAsync(List<Guid> variantsIds, CancellationToken cancellationToken)
+        {
+            return await _souqifyDbContext.ProductVariants.Where(pv => variantsIds.Contains(pv.Id)).ToListAsync(cancellationToken);
+        }
+
         public async Task<IEnumerable<ProductImage>> GetProductImagesAsync(Guid productId)
         {
             return await _souqifyDbContext.ProductImages.Where(pi => pi.ProductId == productId).ToListAsync();

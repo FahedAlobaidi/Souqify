@@ -13,9 +13,7 @@ namespace Souqify.Domain.Entities
 
         public Guid ProductId { get; set; }
 
-        public string? Size { get; set; }
-
-        public string? Color { get; set; }
+        public string? VariantName { get; set; }
 
         public uint RowVersion { get; set; }
 

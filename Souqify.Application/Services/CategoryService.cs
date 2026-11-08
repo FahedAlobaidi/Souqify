@@ -5,6 +5,7 @@ using Souqify.Application.DTOs.Category;
 using Souqify.Application.Exceptions;
 using Souqify.Application.Interfaces;
 using Souqify.Domain.Entities;
+using System.Text.RegularExpressions;
 
 namespace Souqify.Application.Services
 {
@@ -28,9 +29,33 @@ namespace Souqify.Application.Services
                 throw new BadRequestException("Category fields must not be empty");
             }
 
-            if(await _categoryRepository.IsCategoryNameUnique(createCategoryDto.Name))
+            //only if there a parent call this repo method
+            if(createCategoryDto.ParentId is Guid parentId)
+            {
+                var parentCategory=await _categoryRepository.IsCategoryExistOrHasProductsAsync(parentId)
+                    ?? throw new BadRequestException("Parent category not found");
+
+                if(parentCategory)
+                    throw new BadRequestException("The parent already holds products.");
+            }
+
+            if(await _categoryRepository.IsCategoryNameUnique(createCategoryDto.Name,createCategoryDto.ParentId))
             {
                 throw new BadRequestException("Category with this name is already exist");
+            }
+            
+            if(createCategoryDto.Slug == null)
+            {
+                var name = Regex.Replace(createCategoryDto.Name.ToLowerInvariant(), "[^a-z0-9]+","-");
+
+                createCategoryDto.Slug = name.Trim('-');
+            }
+
+            createCategoryDto.Description ??= string.Empty;
+
+            if (await _categoryRepository.IsCategorySlugExist(createCategoryDto.Slug))
+            {
+                throw new BadRequestException("Category with this slug is already exist");
             }
 
             var categoryEnt = _mapper.Map<Category>(createCategoryDto);
@@ -40,6 +65,8 @@ namespace Souqify.Application.Services
             _categoryRepository.AddCategoryAsync(categoryEnt);
 
             await _categoryRepository.SaveChangesAsync();
+
+            _categoryQueries.RemoveCategoriesCache();
 
             return await _categoryQueries.GetCategoryByIdAsync(categoryEnt.Id)?? throw new BadRequestException("Failed to retrieve category after creation");
         }

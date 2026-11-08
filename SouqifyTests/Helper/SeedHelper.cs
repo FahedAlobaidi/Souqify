@@ -68,10 +68,9 @@ namespace SouqifyTests.Helper
                     new ProductVariant
                     {
                         SKU=faker.Random.AlphaNumeric(10).ToUpper(),
-                        Color=faker.Commerce.Color(),
+                        VariantName=faker.Commerce.Color(),
                         LowStockThreshold=5,
                         PriceAdjustment=faker.Random.Int(1,10),
-                        Size=faker.PickRandom("S","M","L","XL"),
                         StockQuantity=faker.Random.Int(1,100),
                         Id=Guid.NewGuid(),
                         IsActive=true,
@@ -135,8 +134,7 @@ namespace SouqifyTests.Helper
                     Id = Guid.NewGuid(),
                     ProductId = product.Id,
                     SKU = faker.Random.AlphaNumeric(10).ToUpper(),
-                    Color = "Black",
-                    Size = "L",
+                    VariantName = "Black",
                     LowStockThreshold = 5,
                     PriceAdjustment = priceAdjustment,
                     StockQuantity = stockQuantity,

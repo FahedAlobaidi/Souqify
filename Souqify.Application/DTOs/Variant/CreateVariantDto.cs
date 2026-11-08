@@ -8,9 +8,7 @@ namespace Souqify.Application.DTOs.Variant
 {
     public class CreateVariantDto
     {
-        public string? Size { get; set; }
-
-        public string? Color { get; set; }
+        public string? VariantName { get; set; }
 
         public required string SKU { get; set; }
 
