@@ -89,23 +89,25 @@ namespace Souqify.Application.Services
 
         public async Task<AdminProductDto> CreateProductAsync(CreateProductDto createProductDto)
         {
-            //i added this ti check for duplicated SKU in the created productDto variants
+            //i added this to check for duplicated SKU in the created productDto variants
             var hashedVariantsSku = new HashSet<string>();
 
-            if (!await _categoryRepository.IsCategoryExistsAsync(createProductDto.CategoryId))
-                throw new BadRequestException("Wrong category id, there is no category with this id");
+            var hasChildren=await _categoryRepository.CategoryHasChildrenAsync(createProductDto.CategoryId)
+                ?? throw new BadRequestException("Wrong category id, there is no category with this id");
+
+            if (hasChildren)
+                throw new BadRequestException("Choose a last-level category, such as Graphic Cards");
 
             foreach (var item in createProductDto.Variants)
             {
                 if (!hashedVariantsSku.Add(item.SKU))
                     throw new BadRequestException("there are duplicated SKU");
 
+                if (createProductDto.BasePrice + item.PriceAdjustment <= 0)
+                    throw new BadRequestException("final price must be more than 0");//change this code bcs its slow
 
-                if(await _productRepository.IsSKUAlreadyExistsAsync(item.SKU,Guid.Empty))
+                if (await _productRepository.IsSKUAlreadyExistsAsync(item.SKU,Guid.Empty))
                     throw new BadRequestException("SKU is not unique");
-
-                if(createProductDto.BasePrice + item.PriceAdjustment <= 0)
-                    throw new BadRequestException("final price must be more than 0");
             }
 
             var productEnt = _mapper.Map<Product>(createProductDto);
@@ -148,9 +150,49 @@ namespace Souqify.Application.Services
 
         public async Task<PagedList<ProductListDto>> GetProductsAsync(ProductQueryParams productQueryParams)
         {
-            var pagedProducts = await _productQueries.GetAllProductsAsync(productQueryParams);
+
+            List<Guid> categoryIds = new();
+
+            if (!string.IsNullOrWhiteSpace(productQueryParams.Category))
+            {
+                categoryIds = await GetCategoryAndDescendantIdsAsync(productQueryParams.Category);
+            }
+            
+            var pagedProducts = await _productQueries.GetAllProductsAsync(productQueryParams,categoryIds);
 
             return pagedProducts;
+        }
+
+        private async Task<List<Guid>> GetCategoryAndDescendantIdsAsync(string slug)
+        {
+            var categories=await _categoryQueries.GetAllCategoriesAsync();
+
+            var root = categories.FirstOrDefault(c => c.Slug == slug);
+
+            if (root == null)
+                throw new BadRequestException("There is no category with this slug");
+
+            var childrenByParent=categories.Where(c=>c.ParentId.HasValue).ToLookup(c => c.ParentId!.Value,c=>c.Id);
+
+            var result=new HashSet<Guid>();
+            var toVisit = new Queue<Guid>();
+
+            toVisit.Enqueue(root.Id);
+
+            while (toVisit.Count > 0)
+            {
+                var currentId=toVisit.Dequeue();
+
+                if (!result.Add(currentId))
+                    continue;
+
+                foreach(var childId in childrenByParent[currentId])
+                {
+                    toVisit.Enqueue(childId);
+                }
+            }
+
+            return result.ToList();
         }
 
         public async Task<bool> RemoveImageAsync(Guid productId, Guid imageId)
@@ -224,9 +266,15 @@ namespace Souqify.Application.Services
                 throw new NotFoundException($"Product with id {productId} not found");
             }
 
-            foreach(var item in productEntUpdate.Variants)
+            var hasChildren = await _categoryRepository.CategoryHasChildrenAsync(updateProductDto.CategoryId)
+                ?? throw new BadRequestException("Wrong category id, there is no category with this id");
+
+            if (hasChildren)
+                throw new BadRequestException("Choose a last-level category, such as Graphic Cards");
+
+            foreach (var item in productEntUpdate.Variants)
             {
-                if(updateProductDto.BasePrice + item.PriceAdjustment <=0)
+                if(updateProductDto.BasePrice + item.PriceAdjustment <= 0)
                     throw new BadRequestException("final price must be more than 0");
             }
 

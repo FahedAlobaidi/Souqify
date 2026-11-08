@@ -1,7 +1,5 @@
 ﻿
-
 using Microsoft.EntityFrameworkCore;
-using Microsoft.VisualBasic;
 using Souqify.Application.DTOs.Cart;
 using Souqify.Application.DTOs.Image;
 using Souqify.Application.DTOs.Product;
@@ -22,12 +20,12 @@ namespace Souqify.Infrastructure.Queries
             _souqifyDbContext = context;
         }
 
-        public async Task<PagedList<ProductListDto>> GetAllProductsAsync(ProductQueryParams productQueryParams)
+        public async Task<PagedList<ProductListDto>> GetAllProductsAsync(ProductQueryParams productQueryParams,List<Guid>? categoryIds)
         {
             var collection = _souqifyDbContext.Products.AsNoTracking().Where(p => p.IsActive);
 
 
-            collection = ApplyFilter(productQueryParams, collection);
+            collection = ApplyFilter(productQueryParams, categoryIds ,collection);
             var totalItems = await collection.CountAsync();
 
             var dtoCollection = collection.Select(p => new ProductListDto
@@ -48,8 +46,6 @@ namespace Souqify.Infrastructure.Queries
 
             return pagedList;
         }
-
-
 
         public async Task<IEnumerable<string>> GetBrandsAsync()
         {
@@ -158,7 +154,7 @@ namespace Souqify.Infrastructure.Queries
             }).FirstOrDefaultAsync();
         }
 
-        private IQueryable<Product> ApplyFilter(ProductQueryParams productQueryParams, IQueryable<Product> collection)
+        private IQueryable<Product> ApplyFilter(ProductQueryParams productQueryParams, List<Guid>? categoryIds, IQueryable<Product> collection)
         {
             //have to make sort, if the sort is null or empty it will call default
             collection = ApplySort(productQueryParams.Sort?.Trim() ?? string.Empty, collection);
@@ -168,14 +164,9 @@ namespace Souqify.Infrastructure.Queries
                 collection = collection.Where(p => p.Brand == productQueryParams.Brand.Trim());
             }
 
-            if (!string.IsNullOrWhiteSpace(productQueryParams.Category))
+            if (!(categoryIds == null || categoryIds.Count == 0))
             {
-
-                /*
-                See what happened? EF Core saw you accessing p.Category.Name and automatically added the JOIN.
-                You never loaded the Category object into memory — it just used it for filtering in SQL.
-                */
-                collection = collection.Where(p => p.Category.Name == productQueryParams.Category.Trim());
+                collection = collection.Where(p => categoryIds.Contains(p.CategoryId));
             } 
 
             if (productQueryParams.MinPrice.HasValue)

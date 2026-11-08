@@ -225,7 +225,8 @@ builder.Services.AddCors(options =>
 });
 
 
-
+//memory cache
+builder.Services.AddMemoryCache();
 
 
 //DI services

@@ -291,6 +291,9 @@ namespace Souqify.Infrastructure.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<int>("DisplayOrder")
+                        .HasColumnType("integer");
+
                     b.Property<bool>("IsActive")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("boolean")
@@ -301,10 +304,23 @@ namespace Souqify.Infrastructure.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
 
+                    b.Property<Guid?>("ParentId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Slug")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
                     b.HasKey("Id");
 
-                    b.HasIndex("Name")
+                    b.HasIndex("Slug")
                         .IsUnique();
+
+                    b.HasIndex("ParentId", "Name")
+                        .IsUnique();
+
+                    NpgsqlIndexBuilderExtensions.AreNullsDistinct(b.HasIndex("ParentId", "Name"), false);
 
                     b.ToTable("Categories");
                 });
@@ -789,6 +805,16 @@ namespace Souqify.Infrastructure.Migrations
                     b.Navigation("ProductVariant");
                 });
 
+            modelBuilder.Entity("Souqify.Domain.Entities.Category", b =>
+                {
+                    b.HasOne("Souqify.Domain.Entities.Category", "Parent")
+                        .WithMany("Children")
+                        .HasForeignKey("ParentId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("Parent");
+                });
+
             modelBuilder.Entity("Souqify.Domain.Entities.Order", b =>
                 {
                     b.HasOne("Souqify.Infrastructure.Identity.ApplicationUser", null)
@@ -948,6 +974,8 @@ namespace Souqify.Infrastructure.Migrations
 
             modelBuilder.Entity("Souqify.Domain.Entities.Category", b =>
                 {
+                    b.Navigation("Children");
+
                     b.Navigation("Products");
                 });
 

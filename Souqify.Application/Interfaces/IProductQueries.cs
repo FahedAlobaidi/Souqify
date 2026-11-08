@@ -9,7 +9,7 @@ namespace Souqify.Application.Interfaces
 {
     public interface IProductQueries
     {
-        Task<PagedList<ProductListDto>> GetAllProductsAsync(ProductQueryParams productQueryParams);
+        Task<PagedList<ProductListDto>> GetAllProductsAsync(ProductQueryParams productQueryParams, List<Guid>? categoryIds);
         Task<ProductDetailDto?> GetProductByIdAsync(Guid productId);
         Task<IEnumerable<CartItemDto>> GetCartItemDetailsByVariantIdsAsync(List<Guid> variantIds);
         Task<decimal?> GetFinalPrice(Guid variantId);
