@@ -6,6 +6,7 @@ using Souqify.Application.DTOs.Admin;
 using Souqify.Application.DTOs.Category;
 using Souqify.Application.DTOs.Image;
 using Souqify.Application.DTOs.Product;
+using Souqify.Application.DTOs.Specs;
 using Souqify.Application.DTOs.Variant;
 using Souqify.Application.Interfaces;
 using Souqify.Controllers.Customer;
@@ -20,11 +21,13 @@ namespace Souqify.Controllers.Admin
     {
         private readonly IProductService _productService;
         private readonly ICategoryService _categoryService;
+        private readonly ISpecService _specService;
 
-        public AdminController(IProductService productService, ICategoryService categoryService)
+        public AdminController(IProductService productService, ICategoryService categoryService, ISpecService specService)
         {
             _productService = productService;
             _categoryService = categoryService;
+            _specService = specService;
         }
 
         [HttpGet("products/low-stock")]
@@ -106,6 +109,72 @@ namespace Souqify.Controllers.Admin
         public async Task<ActionResult> DeleteImage(Guid productId,Guid imageId)
         {
             await _productService.RemoveImageAsync(productId, imageId);
+
+            return NoContent();
+        }
+
+        // ---------- Spec forms (CAT-3) ----------
+
+        [HttpGet("specs")]
+        public async Task<ActionResult<IEnumerable<SpecAttributeDto>>> GetAllSpecAttributes()
+        {
+            return Ok(await _specService.GetAllSpecAttributesAsync());
+        }
+
+        [HttpPost("specs")]
+        public async Task<ActionResult<SpecAttributeDto>> CreateSpecAttribute(CreateSpecAttributeDto createSpecAttributeDto)
+        {
+            var specAttribute = await _specService.CreateSpecAttributeAsync(createSpecAttributeDto);
+
+            // There's no "GET one spec" endpoint, so the Location header points to the list that now contains it.
+            return CreatedAtAction(
+                actionName: nameof(GetAllSpecAttributes),
+                value: specAttribute
+                );
+        }
+
+        [HttpPost("specs/{specId}/options")]
+        public async Task<ActionResult<SpecOptionDto>> CreateSpecOption(Guid specId, CreateSpecOptionDto createSpecOptionDto)
+        {
+            var specOption = await _specService.CreateSpecOptionAsync(specId, createSpecOptionDto);
+
+            // The spec list shows every question with its choices, so the new choice is visible there.
+            return CreatedAtAction(
+                actionName: nameof(GetAllSpecAttributes),
+                value: specOption
+                );
+        }
+
+        [HttpGet("categories/{categoryId}/specs")]
+        public async Task<ActionResult<IEnumerable<CategoryFormSpecDto>>> GetCategoryForm(Guid categoryId)
+        {
+            return Ok(await _specService.GetCategoryFormAsync(categoryId));
+        }
+
+        [HttpPost("categories/{categoryId}/specs")]
+        public async Task<ActionResult<CategorySpecDto>> CreateCategorySpec(Guid categoryId, CreateCategorySpecDto createCategorySpecDto)
+        {
+            var categorySpec = await _specService.CreateCategorySpecAsync(categoryId, createCategorySpecDto);
+
+            return CreatedAtAction(
+                actionName: nameof(GetCategoryForm),
+                routeValues: new { categoryId = categoryId },
+                value: categorySpec
+                );
+        }
+
+        [HttpPut("categories/{categoryId}/specs/{specId}")]
+        public async Task<ActionResult<CategorySpecDto>> UpdateCategorySpec(Guid categoryId, Guid specId, UpdateCategorySpecDto updateCategorySpecDto)
+        {
+            var categorySpec = await _specService.UpdateCategorySpecAsync(categoryId, specId, updateCategorySpecDto);
+
+            return Ok(categorySpec);
+        }
+
+        [HttpDelete("categories/{categoryId}/specs/{specId}")]
+        public async Task<ActionResult> DeleteCategorySpec(Guid categoryId, Guid specId)
+        {
+            await _specService.DeleteCategorySpecAsync(categoryId, specId);
 
             return NoContent();
         }

@@ -37,6 +37,10 @@ namespace Souqify.Application.Services
 
                 if(parentCategory)
                     throw new BadRequestException("The parent already holds products.");
+
+                // Only a last-level category can have a spec form, so a parent with a form can't get a child.
+                if (await _categoryRepository.CategoryHasSpecsAsync(parentId))
+                    throw new BadRequestException("The parent category has a spec form. Remove its form first, or add the child somewhere else.");
             }
 
             if(await _categoryRepository.IsCategoryNameUnique(createCategoryDto.Name,createCategoryDto.ParentId))

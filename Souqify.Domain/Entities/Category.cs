@@ -23,7 +23,7 @@ namespace Souqify.Domain.Entities
         public bool IsActive { get; set; } = true;
         public Category? Parent { get; set; }
         public List<Category> Children { get; set; } = new();
-        //public List<CategorySpec> Specs { get; set; } = new();
+        public List<CategorySpec> Specs { get; set; } = new();
 
         public List<Product> Products { get; set; } = new List<Product>();
     }

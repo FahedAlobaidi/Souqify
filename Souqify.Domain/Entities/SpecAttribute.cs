@@ -11,7 +11,6 @@ namespace Souqify.Domain.Entities
     {
         public Guid Id { get; set; }
         public required string Key { get; set; }    // "vram_gb"
-
         public required string Name { get; set; }   // "Video Memory"
         public SpecDataType DataType { get; set; }  // Number
         public string? Unit { get; set; }  // "GB"

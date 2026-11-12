@@ -325,6 +325,30 @@ namespace Souqify.Infrastructure.Migrations
                     b.ToTable("Categories");
                 });
 
+            modelBuilder.Entity("Souqify.Domain.Entities.CategorySpec", b =>
+                {
+                    b.Property<Guid>("CategoryId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("SpecAttributeId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("DisplayOrder")
+                        .HasColumnType("integer");
+
+                    b.Property<bool>("IsFilterable")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("IsRequired")
+                        .HasColumnType("boolean");
+
+                    b.HasKey("CategoryId", "SpecAttributeId");
+
+                    b.HasIndex("SpecAttributeId");
+
+                    b.ToTable("CategorySpecs");
+                });
+
             modelBuilder.Entity("Souqify.Domain.Entities.Order", b =>
                 {
                     b.Property<Guid>("Id")
@@ -649,6 +673,69 @@ namespace Souqify.Infrastructure.Migrations
                     b.ToTable("RefreshTokens");
                 });
 
+            modelBuilder.Entity("Souqify.Domain.Entities.SpecAttribute", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("DataType")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
+                    b.Property<string>("Key")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<string>("Unit")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Key")
+                        .IsUnique();
+
+                    b.ToTable("SpecAttributes");
+                });
+
+            modelBuilder.Entity("Souqify.Domain.Entities.SpecOption", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("DisplayOrder")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Slug")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<Guid>("SpecAttributeId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Value")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SpecAttributeId", "Slug")
+                        .IsUnique();
+
+                    b.ToTable("SpecOptions");
+                });
+
             modelBuilder.Entity("Souqify.Infrastructure.Identity.ApplicationUser", b =>
                 {
                     b.Property<Guid>("Id")
@@ -815,6 +902,25 @@ namespace Souqify.Infrastructure.Migrations
                     b.Navigation("Parent");
                 });
 
+            modelBuilder.Entity("Souqify.Domain.Entities.CategorySpec", b =>
+                {
+                    b.HasOne("Souqify.Domain.Entities.Category", "Category")
+                        .WithMany("Specs")
+                        .HasForeignKey("CategoryId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Souqify.Domain.Entities.SpecAttribute", "SpecAttribute")
+                        .WithMany()
+                        .HasForeignKey("SpecAttributeId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Category");
+
+                    b.Navigation("SpecAttribute");
+                });
+
             modelBuilder.Entity("Souqify.Domain.Entities.Order", b =>
                 {
                     b.HasOne("Souqify.Infrastructure.Identity.ApplicationUser", null)
@@ -921,6 +1027,17 @@ namespace Souqify.Infrastructure.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("Souqify.Domain.Entities.SpecOption", b =>
+                {
+                    b.HasOne("Souqify.Domain.Entities.SpecAttribute", "SpecAttribute")
+                        .WithMany("Options")
+                        .HasForeignKey("SpecAttributeId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("SpecAttribute");
+                });
+
             modelBuilder.Entity("Souqify.Infrastructure.Identity.ApplicationUser", b =>
                 {
                     b.OwnsOne("Souqify.Domain.Entities.Address", "Address", b1 =>
@@ -977,6 +1094,8 @@ namespace Souqify.Infrastructure.Migrations
                     b.Navigation("Children");
 
                     b.Navigation("Products");
+
+                    b.Navigation("Specs");
                 });
 
             modelBuilder.Entity("Souqify.Domain.Entities.Order", b =>
@@ -996,6 +1115,11 @@ namespace Souqify.Infrastructure.Migrations
             modelBuilder.Entity("Souqify.Domain.Entities.ProductVariant", b =>
                 {
                     b.Navigation("CartItems");
+                });
+
+            modelBuilder.Entity("Souqify.Domain.Entities.SpecAttribute", b =>
+                {
+                    b.Navigation("Options");
                 });
 
             modelBuilder.Entity("Souqify.Infrastructure.Identity.ApplicationUser", b =>

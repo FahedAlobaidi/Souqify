@@ -47,6 +47,15 @@ namespace Souqify.Infrastructure.Repositories
                 .FirstOrDefaultAsync();
         }
 
+        /// <summary>
+        /// true: the category has at least one spec on its form.
+        /// Plain bool: call it only after the category is known to exist.
+        /// </summary>
+        public async Task<bool> CategoryHasSpecsAsync(Guid categoryId)
+        {
+            return await _souqifyDbContext.CategorySpecs.AnyAsync(cs => cs.CategoryId == categoryId);
+        }
+
         public async Task<bool> IsCategoryNameUnique(string name,Guid? parentId)
         {
             return await _souqifyDbContext.Categories.AnyAsync(c => c.Name == name && c.ParentId==parentId);

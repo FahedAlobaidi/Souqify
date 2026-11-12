@@ -27,6 +27,12 @@ namespace Souqify.Infrastructure
 
         public DbSet<OrderItem> OrderItems { get; set; }
 
+        public DbSet<CategorySpec> CategorySpecs { get; set; }
+
+        public DbSet<SpecAttribute> SpecAttributes { get; set; }
+
+        public DbSet<SpecOption> SpecOptions { get; set; }
+
         public SouqifyDbContext(DbContextOptions<SouqifyDbContext> options)
             : base(options)
         {

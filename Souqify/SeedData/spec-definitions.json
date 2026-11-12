@@ -1,0 +1,177 @@
+{
+  "categories": [
+    { "slug": "computer-hardware", "name": "Computer Hardware", "parent": null, "displayOrder": 1, "description": "Parts to build or upgrade a PC." },
+    { "slug": "processors", "name": "Processors", "parent": "computer-hardware", "displayOrder": 1, "description": "Desktop CPUs from Intel and AMD." },
+    { "slug": "motherboards", "name": "Motherboards", "parent": "computer-hardware", "displayOrder": 2, "description": "Boards for Intel and AMD sockets." },
+    { "slug": "graphic-cards", "name": "Graphic Cards", "parent": "computer-hardware", "displayOrder": 3, "description": "GPUs for gaming and creative work." },
+    { "slug": "memory-ram", "name": "Memory (RAM)", "parent": "computer-hardware", "displayOrder": 4, "description": "Desktop RAM kits." },
+    { "slug": "storage", "name": "Storage", "parent": "computer-hardware", "displayOrder": 5, "description": "SSDs and hard drives." },
+    { "slug": "power-supplies", "name": "Power Supplies", "parent": "computer-hardware", "displayOrder": 6, "description": "PSUs to power your build." },
+    { "slug": "pc-cases", "name": "PC Cases", "parent": "computer-hardware", "displayOrder": 7, "description": "Cases in every size." },
+    { "slug": "cpu-coolers", "name": "CPU Coolers", "parent": "computer-hardware", "displayOrder": 8, "description": "Air and liquid coolers." }
+  ],
+
+  "specs": [
+    { "key": "gpu_chipset", "name": "GPU", "dataType": "Option", "options": [ "RTX 5070", "RTX 5080", "RX 9070 XT", "RX 9070" ] },
+    { "key": "chipset_maker", "name": "Chipset Manufacturer", "dataType": "Option", "options": [ "NVIDIA", "AMD", "Intel" ] },
+    { "key": "vram_gb", "name": "Video Memory", "dataType": "Number", "unit": "GB" },
+    { "key": "vram_type", "name": "Memory Type", "dataType": "Option", "options": [ "GDDR6", "GDDR6X", "GDDR7" ] },
+    { "key": "memory_bus_bit", "name": "Memory Interface", "dataType": "Number", "unit": "bit" },
+    { "key": "hdmi_ports", "name": "HDMI Ports", "dataType": "Number" },
+    { "key": "displayport_ports", "name": "DisplayPort Ports", "dataType": "Number" },
+    { "key": "recommended_psu_w", "name": "Recommended PSU", "dataType": "Number", "unit": "W" },
+    { "key": "length_mm", "name": "Card Length", "dataType": "Number", "unit": "mm" },
+    { "key": "power_connectors", "name": "Power Connectors", "dataType": "Text" },
+
+    { "key": "socket", "name": "Socket", "dataType": "Option", "options": [ "AM5", "AM4", "LGA 1851", "LGA 1700" ] },
+    { "key": "memory_type", "name": "Memory Type", "dataType": "Option", "options": [ "DDR5", "DDR4" ] },
+
+    { "key": "cpu_series", "name": "Series", "dataType": "Option", "options": [ "Ryzen 9", "Ryzen 7", "Ryzen 5", "Core Ultra 9", "Core Ultra 7", "Core Ultra 5", "Core i9", "Core i7", "Core i5" ] },
+    { "key": "cpu_cores", "name": "Cores", "dataType": "Number" },
+    { "key": "cpu_threads", "name": "Threads", "dataType": "Number" },
+    { "key": "cpu_base_clock_ghz", "name": "Base Clock", "dataType": "Number", "unit": "GHz" },
+    { "key": "cpu_boost_clock_ghz", "name": "Boost Clock", "dataType": "Number", "unit": "GHz" },
+    { "key": "cpu_l3_cache_mb", "name": "L3 Cache", "dataType": "Number", "unit": "MB" },
+    { "key": "cpu_tdp_w", "name": "TDP", "dataType": "Number", "unit": "W" },
+    { "key": "integrated_graphics", "name": "Integrated Graphics", "dataType": "Boolean" },
+    { "key": "cooler_included", "name": "Cooler Included", "dataType": "Boolean" },
+
+    { "key": "board_chipset", "name": "Chipset", "dataType": "Option", "options": [ "X870E", "X870", "B850", "B840", "X670E", "B650", "A620", "X570", "B550", "A520", "Z890", "B860", "H810", "Z790", "B760", "H610" ] },
+    { "key": "board_form_factor", "name": "Form Factor", "dataType": "Option", "options": [ "E-ATX", "ATX", "Micro-ATX", "Mini-ITX" ] },
+    { "key": "memory_slots", "name": "Memory Slots", "dataType": "Number" },
+    { "key": "max_memory_gb", "name": "Max Memory", "dataType": "Number", "unit": "GB" },
+    { "key": "m2_slots", "name": "M.2 Slots", "dataType": "Number" },
+    { "key": "wifi", "name": "Wi-Fi", "dataType": "Boolean" },
+
+    { "key": "ram_capacity_gb", "name": "Capacity", "dataType": "Number", "unit": "GB" },
+    { "key": "ram_modules", "name": "Modules in Kit", "dataType": "Number" },
+    { "key": "ram_speed_mhz", "name": "Speed", "dataType": "Number", "unit": "MHz" },
+    { "key": "ram_cas_latency", "name": "CAS Latency", "dataType": "Number" },
+
+    { "key": "storage_type", "name": "Type", "dataType": "Option", "options": [ "NVMe SSD", "SATA SSD", "HDD" ] },
+    { "key": "storage_capacity_gb", "name": "Capacity", "dataType": "Number", "unit": "GB" },
+    { "key": "storage_form_factor", "name": "Form Factor", "dataType": "Option", "options": [ "M.2 2280", "2.5-inch", "3.5-inch" ] },
+    { "key": "storage_interface", "name": "Interface", "dataType": "Option", "options": [ "PCIe 5.0 x4", "PCIe 4.0 x4", "PCIe 3.0 x4", "SATA III" ] },
+    { "key": "read_speed_mb_s", "name": "Read Speed", "dataType": "Number", "unit": "MB/s" },
+    { "key": "write_speed_mb_s", "name": "Write Speed", "dataType": "Number", "unit": "MB/s" },
+    { "key": "endurance_tbw", "name": "Endurance", "dataType": "Number", "unit": "TBW" },
+
+    { "key": "wattage_w", "name": "Wattage", "dataType": "Number", "unit": "W" },
+    { "key": "psu_efficiency", "name": "Efficiency Rating", "dataType": "Option", "options": [ "80 PLUS Titanium", "80 PLUS Platinum", "80 PLUS Gold", "80 PLUS Bronze", "80 PLUS" ] },
+    { "key": "psu_modularity", "name": "Modularity", "dataType": "Option", "options": [ "Fully Modular", "Semi-Modular", "Non-Modular" ] },
+    { "key": "psu_form_factor", "name": "Form Factor", "dataType": "Option", "options": [ "ATX", "SFX", "SFX-L" ] },
+    { "key": "psu_12v_2x6", "name": "12V-2x6 Connector", "dataType": "Boolean" },
+
+    { "key": "case_type", "name": "Case Type", "dataType": "Option", "options": [ "Full Tower", "Mid Tower", "Mini Tower", "Small Form Factor" ] },
+    { "key": "supported_form_factors", "name": "Motherboard Support", "dataType": "MultiOption", "options": [ "E-ATX", "ATX", "Micro-ATX", "Mini-ITX" ] },
+    { "key": "max_gpu_length_mm", "name": "Max GPU Length", "dataType": "Number", "unit": "mm" },
+    { "key": "max_cooler_height_mm", "name": "Max CPU Cooler Height", "dataType": "Number", "unit": "mm" },
+    { "key": "case_side_panel", "name": "Side Panel", "dataType": "Option", "options": [ "Tempered Glass", "Mesh", "Solid" ] },
+    { "key": "case_included_fans", "name": "Included Fans", "dataType": "Number" },
+
+    { "key": "cooler_type", "name": "Cooler Type", "dataType": "Option", "options": [ "Air Cooler", "AIO Liquid Cooler" ] },
+    { "key": "supported_sockets", "name": "Socket Support", "dataType": "MultiOption", "options": [ "AM5", "AM4", "LGA 1851", "LGA 1700" ] },
+    { "key": "radiator_size_mm", "name": "Radiator Size", "dataType": "Number", "unit": "mm" },
+    { "key": "cooler_height_mm", "name": "Cooler Height", "dataType": "Number", "unit": "mm" },
+    { "key": "cooler_tdp_w", "name": "Rated TDP", "dataType": "Number", "unit": "W" }
+  ],
+
+  "forms": [
+    {
+      "category": "graphic-cards",
+      "specs": [
+        { "key": "gpu_chipset", "required": true, "filterable": true },
+        { "key": "chipset_maker", "required": true, "filterable": true },
+        { "key": "vram_gb", "required": true, "filterable": true },
+        { "key": "vram_type", "required": true, "filterable": true },
+        { "key": "memory_bus_bit", "required": false, "filterable": true },
+        { "key": "hdmi_ports", "required": false, "filterable": true },
+        { "key": "displayport_ports", "required": false, "filterable": false },
+        { "key": "recommended_psu_w", "required": true, "filterable": false },
+        { "key": "length_mm", "required": false, "filterable": false },
+        { "key": "power_connectors", "required": false, "filterable": false }
+      ]
+    },
+    {
+      "category": "processors",
+      "specs": [
+        { "key": "socket", "required": true, "filterable": true },
+        { "key": "cpu_series", "required": true, "filterable": true },
+        { "key": "cpu_cores", "required": true, "filterable": true },
+        { "key": "cpu_threads", "required": true, "filterable": false },
+        { "key": "cpu_base_clock_ghz", "required": false, "filterable": false },
+        { "key": "cpu_boost_clock_ghz", "required": true, "filterable": true },
+        { "key": "cpu_l3_cache_mb", "required": false, "filterable": false },
+        { "key": "cpu_tdp_w", "required": true, "filterable": false },
+        { "key": "integrated_graphics", "required": false, "filterable": true },
+        { "key": "cooler_included", "required": false, "filterable": true }
+      ]
+    },
+    {
+      "category": "motherboards",
+      "specs": [
+        { "key": "socket", "required": true, "filterable": true },
+        { "key": "board_chipset", "required": true, "filterable": true },
+        { "key": "board_form_factor", "required": true, "filterable": true },
+        { "key": "memory_type", "required": true, "filterable": true },
+        { "key": "memory_slots", "required": true, "filterable": false },
+        { "key": "max_memory_gb", "required": false, "filterable": false },
+        { "key": "m2_slots", "required": false, "filterable": true },
+        { "key": "wifi", "required": false, "filterable": true }
+      ]
+    },
+    {
+      "category": "memory-ram",
+      "specs": [
+        { "key": "memory_type", "required": true, "filterable": true },
+        { "key": "ram_capacity_gb", "required": true, "filterable": true },
+        { "key": "ram_modules", "required": true, "filterable": false },
+        { "key": "ram_speed_mhz", "required": true, "filterable": true },
+        { "key": "ram_cas_latency", "required": false, "filterable": false }
+      ]
+    },
+    {
+      "category": "storage",
+      "specs": [
+        { "key": "storage_type", "required": true, "filterable": true },
+        { "key": "storage_capacity_gb", "required": true, "filterable": true },
+        { "key": "storage_form_factor", "required": true, "filterable": true },
+        { "key": "storage_interface", "required": true, "filterable": true },
+        { "key": "read_speed_mb_s", "required": false, "filterable": false },
+        { "key": "write_speed_mb_s", "required": false, "filterable": false },
+        { "key": "endurance_tbw", "required": false, "filterable": false }
+      ]
+    },
+    {
+      "category": "power-supplies",
+      "specs": [
+        { "key": "wattage_w", "required": true, "filterable": true },
+        { "key": "psu_efficiency", "required": true, "filterable": true },
+        { "key": "psu_modularity", "required": true, "filterable": true },
+        { "key": "psu_form_factor", "required": true, "filterable": true },
+        { "key": "psu_12v_2x6", "required": false, "filterable": true }
+      ]
+    },
+    {
+      "category": "pc-cases",
+      "specs": [
+        { "key": "case_type", "required": true, "filterable": true },
+        { "key": "supported_form_factors", "required": true, "filterable": true },
+        { "key": "max_gpu_length_mm", "required": true, "filterable": false },
+        { "key": "max_cooler_height_mm", "required": false, "filterable": false },
+        { "key": "case_side_panel", "required": false, "filterable": true },
+        { "key": "case_included_fans", "required": false, "filterable": false }
+      ]
+    },
+    {
+      "category": "cpu-coolers",
+      "specs": [
+        { "key": "cooler_type", "required": true, "filterable": true },
+        { "key": "supported_sockets", "required": true, "filterable": true },
+        { "key": "radiator_size_mm", "required": false, "filterable": true },
+        { "key": "cooler_height_mm", "required": false, "filterable": false },
+        { "key": "cooler_tdp_w", "required": false, "filterable": false }
+      ]
+    }
+  ]
+}

@@ -27,6 +27,8 @@ using ProductService = Souqify.Application.Services.ProductService;
 using Souqify.Infrastructure.Payment;
 using Souqify.Application.Options;
 using Souqify.Infrastructure.BackgroundJobs.OrderJobs;
+using Souqify.Infrastructure.Seeding;
+using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -35,6 +37,9 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllers(options =>
 {
     options.Filters.Add<ValidationFilter>();
+}).AddJsonOptions(options =>
+{
+    options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
 });
 
 //i dont need to add the rest of validators bcs assembly will scan the entire file where the CreateProductValidator
@@ -249,6 +254,10 @@ builder.Services.AddScoped<IOrderQueries, OrderQueries>();
 builder.Services.AddScoped<IOrderRepository, OrderRepository>();
 builder.Services.AddScoped<IPaymentGateway, StripePaymentGateway>();
 builder.Services.AddScoped<IStaleOrderCleanupJob, StaleOrderCleanupJob>();
+builder.Services.AddScoped<ISpecRepository, SpecRepository>();
+builder.Services.AddScoped<ISpecQueries, SpecQueries>();
+builder.Services.AddScoped<ISpecService, SpecService>();
+builder.Services.AddScoped<SpecSeeder>();
 
 
 builder.Services.AddOptions<StaleOrderCancellationOptions>()
@@ -297,6 +306,11 @@ using (var scope = app.Services.CreateScope())
             await userManager.AddToRoleAsync(user, "admin");
         }
     }
+
+    // Spec forms from SeedData/spec-definitions.json: categories, questions, choices and form rows.
+    // Runs in every environment (D1). Add-only, so a restart adds nothing. A broken file stops the app here.
+    var specSeeder = scope.ServiceProvider.GetRequiredService<SpecSeeder>();
+    await specSeeder.SeedAsync();
 }
 
 app.UseMiddleware<GlobalExceptionHandliongMiddleware>();
