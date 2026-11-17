@@ -44,6 +44,12 @@ namespace Souqify.Controllers.Admin
             return Ok(category);
         }
 
+        [HttpGet("products/{productId}")]
+        public async Task<ActionResult<AdminProductDto>> GetAdminProduct(Guid productId)
+        {
+            return Ok(await _productService.GetAdminProductByIdAsync(productId));
+        }
+
         [HttpPost("products")]
         public async Task<ActionResult<AdminProductDto>> CreateProduct(CreateProductDto createProductDto)
         {
@@ -145,6 +151,14 @@ namespace Souqify.Controllers.Admin
                 );
         }
 
+        [HttpDelete("specs/{specId}/options/{optionId}")]
+        public async Task<ActionResult> DeleteSpecOption(Guid specId, Guid optionId)
+        {
+            await _specService.DeleteSpecOptionAsync(specId, optionId);
+
+            return NoContent();
+        }
+
         [HttpGet("categories/{categoryId}/specs")]
         public async Task<ActionResult<IEnumerable<CategoryFormSpecDto>>> GetCategoryForm(Guid categoryId)
         {
@@ -175,6 +189,30 @@ namespace Souqify.Controllers.Admin
         public async Task<ActionResult> DeleteCategorySpec(Guid categoryId, Guid specId)
         {
             await _specService.DeleteCategorySpecAsync(categoryId, specId);
+
+            return NoContent();
+        }
+
+        // ---------- Product spec answers (CAT-4) ----------
+
+        [HttpGet("products/{productId}/specs")]
+        public async Task<ActionResult<ProductSpecsDto>> GetProductSpecs(Guid productId)
+        {
+            return Ok(await _specService.GetProductSpecsAsync(productId));
+        }
+
+        [HttpPut("products/{productId}/specs")]
+        public async Task<ActionResult<ProductSpecsDto>> UpdateProductSpecs(Guid productId, UpdateProductSpecsDto updateProductSpecsDto)
+        {
+            var productSpecs = await _specService.UpdateProductSpecsAsync(productId, updateProductSpecsDto);
+
+            return Ok(productSpecs);
+        }
+
+        [HttpDelete("products/{productId}/specs")]
+        public async Task<ActionResult> ClearProductSpecs(Guid productId)
+        {
+            await _specService.ClearProductSpecsAsync(productId);
 
             return NoContent();
         }

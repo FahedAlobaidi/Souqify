@@ -23,5 +23,8 @@ namespace Souqify.Application.DTOs.Product
         public List<ProductImageDto> ProductImages { get; set; } = new List<ProductImageDto>();
 
         public List<VariantDto> Variants { get; set; } = new List<VariantDto>();
+
+        // CAT-4 AC 5: the answered specs, in the form's order. Unanswered questions aren't here.
+        public List<ProductSpecDto> Specs { get; set; } = new List<ProductSpecDto>();
     }
 }

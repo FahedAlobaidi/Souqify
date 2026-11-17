@@ -13,5 +13,9 @@ namespace Souqify.Application.Interfaces
         Task<IEnumerable<CategoryFormSpecDto>> GetCategoryFormAsync(Guid categoryId);
         Task<SpecOptionDto> CreateSpecOptionAsync(Guid specId, CreateSpecOptionDto createSpecOptionDto);
         Task<IEnumerable<SpecAttributeDto>> GetAllSpecAttributesAsync();
+        Task<ProductSpecsDto> GetProductSpecsAsync(Guid productId);
+        Task<ProductSpecsDto> UpdateProductSpecsAsync(Guid productId, UpdateProductSpecsDto updateProductSpecsDto);
+        Task DeleteSpecOptionAsync(Guid specId, Guid optionId);
+        Task ClearProductSpecsAsync(Guid productId);
     }
 }

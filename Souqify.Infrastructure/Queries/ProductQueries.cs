@@ -7,6 +7,8 @@ using Souqify.Application.DTOs.Variant;
 using Souqify.Application.Interfaces;
 using Souqify.Application.Models;
 using Souqify.Domain.Entities;
+using Souqify.Domain.Entities.Enums;
+using System.Globalization;
 
 namespace Souqify.Infrastructure.Queries
 {
@@ -137,6 +139,67 @@ namespace Souqify.Infrastructure.Queries
 
             var product = await dtoCollection.FirstOrDefaultAsync();
 
+            if (product == null)
+                return null;
+
+            // CAT-4 AC 5: the product's answers, one row each, with what the page needs to show them.
+            var specRows = await _souqifyDbContext.ProductSpecValues.AsNoTracking()
+                .Where(sv => sv.ProductId == productId)
+                .Select(sv => new
+                {
+                    Key = sv.SpecAttribute!.Key,
+                    Name = sv.SpecAttribute.Name,
+                    Unit = sv.SpecAttribute.Unit,
+                    DataType = sv.SpecAttribute.DataType,
+                    OptionValue = sv.OptionId != null ? sv.Option!.Value : null,
+                    OptionOrder = sv.OptionId != null ? sv.Option!.DisplayOrder : 0,
+                    sv.NumberValue,
+                    sv.BoolValue,
+                    sv.TextValue,
+                    // DisplayOrder lives on the form row: this product's category and this question.
+                    FormOrder = _souqifyDbContext.CategorySpecs
+                        .Where(cs => cs.CategoryId == sv.Product!.CategoryId && cs.SpecAttributeId == sv.SpecAttributeId)
+                        .Select(cs => (int?)cs.DisplayOrder)
+                        .FirstOrDefault()
+                })
+                .OrderBy(r => r.FormOrder)
+                .ThenBy(r => r.Key)
+                .ThenBy(r => r.OptionOrder)
+                .ToListAsync();
+
+            // Many rows in, one line per question out: a MultiOption answer has one row per choice, but the customer sees one line.
+            foreach (var row in specRows)
+            {
+                // Find-or-create this question's line, the same as the MultiOption block in SpecQueries.GetProductSpecsAsync.
+                ProductSpecDto? spec = product.Specs.FirstOrDefault(s => s.Key == row.Key);
+
+                if (spec == null)
+                {
+                    spec = new ProductSpecDto();
+                    spec.Key = row.Key;
+                    spec.Name = row.Name;
+                    spec.Unit = row.Unit;
+                    product.Specs.Add(spec);
+                }
+
+                // The value as the customer reads it.
+                switch (row.DataType)
+                {
+                    case SpecDataType.Option:
+                    case SpecDataType.MultiOption:
+                        spec.Values.Add(row.OptionValue!);      // "RTX 5070", not the slug
+                        break;
+                    case SpecDataType.Number:
+                        spec.Values.Add(row.NumberValue!.Value.ToString("0.###", CultureInfo.InvariantCulture));   // 12.000 becomes "12", 5.400 becomes "5.4"
+                        break;
+                    case SpecDataType.Boolean:
+                        spec.Values.Add(row.BoolValue == true ? "Yes" : "No");
+                        break;
+                    case SpecDataType.Text:
+                        spec.Values.Add(row.TextValue!);
+                        break;
+                }
+            }
 
             return product;
         }

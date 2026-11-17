@@ -54,6 +54,12 @@ namespace Souqify.Infrastructure.Repositories
             return await _souqifyDbContext.Products.Where(p=>p.Id==productId).Include(p=>p.Variants).Include(p=>p.ProductImages).Include(p=>p.Category).AsSplitQuery().FirstOrDefaultAsync();
         }
 
+        // CAT-4: the specs PUT. Tracked (no AsNoTracking), because the old answers get removed and new ones added through SpecValues.
+        public async Task<Product?> GetProductWithSpecValuesAsync(Guid productId)
+        {
+            return await _souqifyDbContext.Products.Where(p => p.Id == productId).Include(p => p.SpecValues).FirstOrDefaultAsync();
+        }
+
         public async Task<ProductImage?> GetProductImageByIdAsync(Guid productId, Guid productImageId)
         {
             return await _souqifyDbContext.ProductImages.FirstOrDefaultAsync(pi=>pi.Id==productImageId && pi.ProductId==productId);
@@ -84,6 +90,18 @@ namespace Souqify.Infrastructure.Repositories
         public async Task<bool> IsProductExistAsync(Guid id)
         {
             return await _souqifyDbContext.Products.AnyAsync(p => p.Id == id);
+        }
+
+        // CAT-4 AC 6: does every product in this category have an answer for this question? A category with no products gives true.
+        // The Where picks the rows first; AllAsync only asks about those rows.
+        public async Task<bool> AreAllProductsAnsweredAsync(Guid categoryId, Guid specAttributeId)
+        {
+            return await _souqifyDbContext.Products.Where(p => p.CategoryId == categoryId).AllAsync(p => p.SpecValues.Any(sv => sv.SpecAttributeId == specAttributeId));
+        }
+
+        public async Task<bool> IsProductHasAnswersAsync(Guid productId)
+        {
+            return await _souqifyDbContext.Products.AnyAsync(p => p.Id == productId && (p.SpecValues.Any()));
         }
 
         public async Task<bool> SaveChangesAsync()

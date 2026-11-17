@@ -19,6 +19,8 @@ namespace Souqify.Application.Interfaces
 
         public Task<IEnumerable<CategoryDto>> GetCategoriesAsync();
 
+        public Task<AdminProductDto> GetAdminProductByIdAsync(Guid productId);
+
         public Task<AdminProductDto> CreateProductAsync(CreateProductDto createProductDto);
 
         public Task<AdminProductDto> UpdateProductAsync(Guid productId,UpdateProductDto updateProductDto);

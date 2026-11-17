@@ -16,12 +16,15 @@ namespace Souqify.Application.Interfaces
         Task<IEnumerable<ProductVariant>> GetVariantsForStockReleaseAsync(List<Guid> variantsIds, CancellationToken cancellationToken);
         Task<ProductImage?> GetProductImageByIdAsync(Guid productId, Guid productImageId);
         Task<Product?> GetProductByIdAsync(Guid productId);
+        Task<Product?> GetProductWithSpecValuesAsync(Guid productId);
         Task<decimal> GetProductBasePriceAsync(Guid productId);
         Task<ProductImage?> GetMainImageAsync(Guid productId);
         Task<Product> AddProductAsync(Product product);
         Task<ProductVariant> AddProductVariantAsync(Guid productId, ProductVariant productVariant);
         Task<ProductImage> AddProductImageAsync(Guid productId, ProductImage productImage);
         Task<bool> IsProductExistAsync(Guid id);
+        Task<bool> AreAllProductsAnsweredAsync(Guid categoryId, Guid specAttributeId);
+        Task<bool> IsProductHasAnswersAsync(Guid productId);
         Task<bool> IsSKUAlreadyExistsAsync(string sku, Guid currentVariantId);
         void DeactivateProduct(Product product);
         void DeleteProductImage(ProductImage productImage);

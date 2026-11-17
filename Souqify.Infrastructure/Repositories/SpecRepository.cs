@@ -44,6 +44,12 @@ namespace Souqify.Infrastructure.Repositories
             return await _souqifyDbContext.SpecAttributes.AnyAsync(sa => sa.Id == id);
         }
 
+        // CAT-4 AC 6: does any product in this category have an answer for this question? Answers from other categories don't count.
+        public async Task<bool> IsSpecAnsweredInCategoryAsync(Guid categoryId, Guid specAttributeId)
+        {
+            return await _souqifyDbContext.ProductSpecValues.AnyAsync(sv => sv.SpecAttributeId == specAttributeId && sv.Product!.CategoryId == categoryId);
+        }
+
         public async Task<bool> IsOptionSlugExistAsync(Guid specAttributeId, string slug)
         {
             return await _souqifyDbContext.SpecOptions
@@ -68,6 +74,24 @@ namespace Souqify.Infrastructure.Repositories
         public void DeleteCategorySpec(CategorySpec categorySpec)
         {
             _souqifyDbContext.CategorySpecs.Remove(categorySpec);
+        }
+
+        // CAT-4 AC 7: one choice of one question. Both ids are in the URL, so a choice of another question gives null (404).
+        public async Task<SpecOption?> GetSpecOptionAsync(Guid specAttributeId, Guid optionId)
+        {
+            return await _souqifyDbContext.SpecOptions
+                .FirstOrDefaultAsync(o => o.Id == optionId && o.SpecAttributeId == specAttributeId);
+        }
+
+        // CAT-4 AC 6 rule 4: has any product chosen this choice? Every category counts, because the choice belongs to the question, not to one form.
+        public async Task<bool> IsOptionInUseAsync(Guid optionId)
+        {
+            return await _souqifyDbContext.ProductSpecValues.AnyAsync(sv => sv.OptionId == optionId);
+        }
+
+        public void DeleteSpecOption(SpecOption specOption)
+        {
+            _souqifyDbContext.SpecOptions.Remove(specOption);
         }
 
         public async Task<bool> SaveChangesAsync()

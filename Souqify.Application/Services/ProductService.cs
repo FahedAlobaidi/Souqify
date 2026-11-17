@@ -257,6 +257,11 @@ namespace Souqify.Application.Services
             return productEnt.IsActive;
         }
 
+        public async Task<AdminProductDto> GetAdminProductByIdAsync(Guid productId)
+        {
+            return await _adminProductQueries.GetAdminProductByIdAsync(productId) ?? throw new NotFoundException($"Product with id {productId} not found");
+        }
+
         public async Task<AdminProductDto> UpdateProductAsync(Guid productId, UpdateProductDto updateProductDto)
         {
             var productEntUpdate =await _productRepository.GetProductByIdAsync(productId);
@@ -266,11 +271,17 @@ namespace Souqify.Application.Services
                 throw new NotFoundException($"Product with id {productId} not found");
             }
 
-            var hasChildren = await _categoryRepository.CategoryHasChildrenAsync(updateProductDto.CategoryId)
-                ?? throw new BadRequestException("Wrong category id, there is no category with this id");
+            if(productEntUpdate.CategoryId!= updateProductDto.CategoryId)
+            {
+                var hasChildren = await _categoryRepository.CategoryHasChildrenAsync(updateProductDto.CategoryId)
+               ?? throw new BadRequestException("Wrong category id, there is no category with this id");
 
-            if (hasChildren)
-                throw new BadRequestException("Choose a last-level category, such as Graphic Cards");
+                if (hasChildren)
+                    throw new BadRequestException("Choose a last-level category, such as Graphic Cards");
+
+                if (await _productRepository.IsProductHasAnswersAsync(productId))
+                    throw new ConflictException("This product has spec answers. Clear its specs first, then change its category.");
+            }
 
             foreach (var item in productEntUpdate.Variants)
             {

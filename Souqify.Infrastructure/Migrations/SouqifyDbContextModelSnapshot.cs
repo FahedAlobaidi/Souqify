@@ -580,6 +580,49 @@ namespace Souqify.Infrastructure.Migrations
                     b.ToTable("ProductImages");
                 });
 
+            modelBuilder.Entity("Souqify.Domain.Entities.ProductSpecValue", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<bool?>("BoolValue")
+                        .HasColumnType("boolean");
+
+                    b.Property<decimal?>("NumberValue")
+                        .HasPrecision(12, 3)
+                        .HasColumnType("numeric(12,3)");
+
+                    b.Property<Guid?>("OptionId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("ProductId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("SpecAttributeId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("TextValue")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("OptionId");
+
+                    b.HasIndex("SpecAttributeId");
+
+                    b.HasIndex("ProductId", "SpecAttributeId", "OptionId")
+                        .IsUnique();
+
+                    NpgsqlIndexBuilderExtensions.AreNullsDistinct(b.HasIndex("ProductId", "SpecAttributeId", "OptionId"), false);
+
+                    b.ToTable("ProductSpecValues", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_ProductSpecValues_ExactlyOneValue", "num_nonnulls(\"OptionId\", \"NumberValue\", \"BoolValue\", \"TextValue\") = 1");
+                        });
+                });
+
             modelBuilder.Entity("Souqify.Domain.Entities.ProductVariant", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1007,6 +1050,32 @@ namespace Souqify.Infrastructure.Migrations
                     b.Navigation("Product");
                 });
 
+            modelBuilder.Entity("Souqify.Domain.Entities.ProductSpecValue", b =>
+                {
+                    b.HasOne("Souqify.Domain.Entities.SpecOption", "Option")
+                        .WithMany()
+                        .HasForeignKey("OptionId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Souqify.Domain.Entities.Product", "Product")
+                        .WithMany("SpecValues")
+                        .HasForeignKey("ProductId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Souqify.Domain.Entities.SpecAttribute", "SpecAttribute")
+                        .WithMany()
+                        .HasForeignKey("SpecAttributeId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Option");
+
+                    b.Navigation("Product");
+
+                    b.Navigation("SpecAttribute");
+                });
+
             modelBuilder.Entity("Souqify.Domain.Entities.ProductVariant", b =>
                 {
                     b.HasOne("Souqify.Domain.Entities.Product", "Product")
@@ -1108,6 +1177,8 @@ namespace Souqify.Infrastructure.Migrations
                     b.Navigation("CartItems");
 
                     b.Navigation("ProductImages");
+
+                    b.Navigation("SpecValues");
 
                     b.Navigation("Variants");
                 });

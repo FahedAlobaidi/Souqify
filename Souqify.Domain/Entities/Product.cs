@@ -33,5 +33,7 @@ namespace Souqify.Domain.Entities
         public List<ProductImage> ProductImages { get; set; } = new List<ProductImage>();
 
         public List<CartItem> CartItems { get; set; } = new List<CartItem>();
+
+        public List<ProductSpecValue> SpecValues { get; set; } = new List<ProductSpecValue>();
     }
 }

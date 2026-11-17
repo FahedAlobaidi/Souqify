@@ -16,7 +16,11 @@ namespace Souqify.Application.Interfaces
         Task<bool> IsOptionSlugExistAsync(Guid specAttributeId, string slug);
         Task<CategorySpec?> GetCategorySpecAsync(Guid categoryId, Guid specAttributeId);
         Task<bool> IsCategorySpecExistAsync(Guid categoryId, Guid specAttributeId);
+        Task<bool> IsSpecAnsweredInCategoryAsync(Guid categoryId, Guid specAttributeId);
         void DeleteCategorySpec(CategorySpec categorySpec);
+        Task<SpecOption?> GetSpecOptionAsync(Guid specAttributeId, Guid optionId);
+        Task<bool> IsOptionInUseAsync(Guid optionId);
+        void DeleteSpecOption(SpecOption specOption);
         Task<bool> SaveChangesAsync();
     }
 }

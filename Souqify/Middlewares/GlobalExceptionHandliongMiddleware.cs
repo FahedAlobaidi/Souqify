@@ -36,6 +36,8 @@ namespace Souqify.Middlewares
                     UnauthorizedException => (StatusCodes.Status401Unauthorized, "Unauthorized"),
                     LockoutException => (StatusCodes.Status423Locked, "Account locked"),
                     DuplicateIdempotencyKeyException=>(StatusCodes.Status409Conflict, "This request was already processed"),
+                    ConcurrencyConflictException=>(StatusCodes.Status409Conflict, "Conflict"),
+                    ConflictException=>(StatusCodes.Status409Conflict, "Conflict"),
                     DbUpdateConcurrencyException =>(StatusCodes.Status409Conflict, "This item changed while you were working — please retry"),
                     DbUpdateException dbEx when IsUniqueViolation(dbEx)=>(StatusCodes.Status409Conflict, "This item changed while you were working — please retry"),
                     _ => (StatusCodes.Status500InternalServerError, "Something went wrong")

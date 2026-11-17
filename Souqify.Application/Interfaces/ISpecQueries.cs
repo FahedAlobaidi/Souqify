@@ -1,4 +1,5 @@
 
+using Souqify.Application.DTOs.Admin;
 using Souqify.Application.DTOs.Specs;
 
 namespace Souqify.Application.Interfaces
@@ -7,5 +8,6 @@ namespace Souqify.Application.Interfaces
     {
         Task<IEnumerable<SpecAttributeDto>> GetAllSpecAttributesAsync();
         Task<IEnumerable<CategoryFormSpecDto>> GetCategoryFormAsync(Guid categoryId);
+        Task<ProductSpecsDto?> GetProductSpecsAsync(Guid productId);
     }
 }

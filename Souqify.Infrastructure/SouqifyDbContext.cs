@@ -33,6 +33,8 @@ namespace Souqify.Infrastructure
 
         public DbSet<SpecOption> SpecOptions { get; set; }
 
+        public DbSet<ProductSpecValue> ProductSpecValues { get; set; }
+
         public SouqifyDbContext(DbContextOptions<SouqifyDbContext> options)
             : base(options)
         {
